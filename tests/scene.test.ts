@@ -6,7 +6,7 @@ import {validatePatch,profiles,defaults} from '../scripts/control.mjs';
 
 test('preview and service share the artist-approved defaults',()=>{
  assert.deepEqual(defaults,DEFAULTS);
- assert.deepEqual(DEFAULTS,{time:0,paused:false,motion:.95,river:.9,trail:1.35,palette:'nocturne',cameraTilt:40,cameraFov:35,aspect:'3:4',music:true,volume:.8,postStyle:'prism',postStrength:.7});
+ assert.deepEqual(DEFAULTS,{time:0,paused:false,motion:.95,river:.9,trail:1.35,palette:'nocturne',cameraTilt:40,cameraFov:35,aspect:'3:4',music:true,volume:.8,postStyle:'etching',postStrength:.45});
 });
 
 test('the duck and transported frame close without a seam',()=>{

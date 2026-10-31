@@ -24,8 +24,9 @@ export function createWorldRig(scene:T.Scene,house:ReturnType<typeof createArchi
  const inverse=new T.Matrix4();
  return {update(time:number,target:T.Vector3,motion:number){
   rigs.forEach(({turn,base,delay})=>{turn.quaternion.setFromAxisAngle(axis,exchangeAngle(time,delay,3.0));base.updateWorldMatrix(true,true);});
-  ghostBase!.updateWorldMatrix(true,false);clips.forEach(({plane,rest})=>plane.copy(rest).applyMatrix4(ghostBase!.matrixWorld));
+  ghostBase!.updateWorldMatrix(true,false);
   inverse.copy(ghostBase!.matrixWorld).invert();
   ghost.update(time,target.clone().applyMatrix4(inverse),motion);
+  clips.forEach(({plane,rest})=>plane.copy(rest).applyMatrix4(ghostBase!.matrixWorld));
  },rigs};
 }

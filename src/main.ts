@@ -1,6 +1,7 @@
 import './style.css';
 import {createArtwork} from './scene.ts';
 import {LoopAudio} from './loop-audio.ts';
+import {regionInk} from './inverted/typography.ts';
 import {DEFAULTS,DURATION,wrap,FRAME_FORMATS,type ArtState} from './story.ts';
 
 const artwork=await createArtwork();
@@ -13,6 +14,8 @@ const offline=new URLSearchParams(location.search).has('render');
 const menu=document.querySelector<HTMLButtonElement>('#menu')!;
 const panel=document.querySelector<HTMLElement>('#panel')!;
 if(offline){menu.hidden=true;document.body.classList.add('offline')}
+const inkCanvas=document.createElement('canvas');inkCanvas.width=48;inkCanvas.height=64;
+const inkContext=inkCanvas.getContext('2d',{willReadFrequently:true})!;inkContext.imageSmoothingQuality='high';
 await document.fonts.load('48px Artwork');
 
 function draw(t:number,w:number,h:number,s:ArtState){
@@ -21,16 +24,17 @@ function draw(t:number,w:number,h:number,s:ArtState){
  ctx.drawImage(output.canvas,0,0,w,h);
  const margin=w*.066;
  const day=output.story.daylight;
- const textInk=(x:number,y:number)=>{const a=output.story.backgroundAngle,field=.5-(.5-y)*Math.cos(a)-(x-.5)*w/h*Math.sin(a);let blend=Math.max(0,Math.min(1,(field-.50)/.30));blend=blend*blend*(3-2*blend);if(s.postStyle==='etching'&&s.postStrength>.35)blend=1;return `rgb(${[255,246,212].map((v,i)=>Math.round(v*(1-blend)+[59,30,78][i]!*blend)).join(',')})`;};
- const ink=textInk(.066,.046);ctx.fillStyle=ink;ctx.textBaseline='top';
- ctx.font=`${w*.052}px Artwork, Georgia, serif`;
+ inkContext.drawImage(output.canvas,0,0,48,64);const background=inkContext.getImageData(0,0,48,64).data;
+ const ink=(x:number,y:number,width:number,height:number)=>regionInk(background,48,64,x,y,width,height);
+ ctx.textBaseline='top';ctx.font=`${w*.052}px Artwork, Georgia, serif`;
+ ctx.fillStyle=ink(.066,.046,ctx.measureText('Upside Down').width/w,w*.052/h);
  ctx.fillText('Upside Down',margin,h*.046);
- ctx.font=`500 ${w*.013}px Inter, Helvetica, sans-serif`;
- ctx.letterSpacing=`${w*.0024}px`;
- ctx.fillStyle=ink;ctx.fillText('ALL HALLOWS’ EVE.',margin,h*.046+w*.058);
- ctx.letterSpacing='0px';
- ctx.font=`${w*.022}px Artwork, Georgia, serif`;
- ctx.fillStyle=textInk(.934,.955);
+ ctx.font=`500 ${w*.013}px Inter, Helvetica, sans-serif`;ctx.letterSpacing=`${w*.0024}px`;
+ const subtitleY=h*.046+w*.058;
+ ctx.fillStyle=ink(.066,subtitleY/h,ctx.measureText('ALL HALLOWS’ EVE.').width/w,w*.013/h);
+ ctx.fillText('ALL HALLOWS’ EVE.',margin,subtitleY);ctx.letterSpacing='0px';
+ ctx.font=`${w*.022}px Artwork, Georgia, serif`;const signatureWidth=ctx.measureText('@EuanTop').width;
+ ctx.fillStyle=ink(.934-signatureWidth/w,.955,signatureWidth/w,w*.022/h);
  ctx.textAlign='right';ctx.fillText('@EuanTop',w-margin,h*.955);ctx.textAlign='left';
  frameTime=wrap(t);
  const sound=audio.diagnostics;

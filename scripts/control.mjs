@@ -10,7 +10,7 @@ import {VERSION as MUSIC_VERSION} from './compose.mjs';
 import {exportStamp,pointLatest} from './export-history.mjs';
 
 const DURATION=28.8,FPS=30,FRAMES=864;
-export const defaults={time:0,paused:false,motion:.95,river:.9,trail:1.35,palette:'nocturne',cameraTilt:40,cameraFov:35,aspect:'3:4',music:true,volume:.8,postStyle:'prism',postStrength:.7};
+export const defaults={time:0,paused:false,motion:.95,river:.9,trail:1.35,palette:'nocturne',cameraTilt:40,cameraFov:35,aspect:'3:4',music:true,volume:.8,postStyle:'etching',postStrength:.45};
 export const schema={time:{type:'number',min:0,max:28.8,unit:'seconds'},paused:{type:'boolean'},motion:{type:'number',min:0,max:2},river:{type:'number',min:0,max:1},trail:{type:'number',min:0,max:2},palette:{enum:['violet','ultraviolet','nocturne']},cameraTilt:{type:'number',min:22,max:58,unit:'degrees'},cameraFov:{type:'number',min:28,max:52,unit:'degrees'},aspect:{enum:['3:4','9:16','16:9']},music:{type:'boolean'},volume:{type:'number',min:0,max:1},postStyle:{enum:['original','prism','film','etching']},postStrength:{type:'number',min:0,max:1}};
 export function validatePatch(patch){
  if(!patch||typeof patch!=='object'||Array.isArray(patch))throw Error('Expected patch object');

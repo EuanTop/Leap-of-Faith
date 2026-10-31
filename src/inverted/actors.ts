@@ -9,7 +9,7 @@ import {exchangeAt} from './exchange.mjs';
 export function duckPose(time:number){const phase=wrap(time+exchangeAt(time).routeOffset)/DURATION*TAU;return {phase,position:new T.Vector3(6.0+4.0*Math.sin(phase),-.175,28.0+2.6*Math.cos(phase)),yaw:Math.atan2(4.0*Math.cos(phase),-2.6*Math.sin(phase))};}
 export function swimPosition(time:number,kind:'duck'|'swan'='duck'){
  const p=duckPose(time),separation=exchangeAt(time).separation*(kind==='duck'?1:-1);
- p.position.x+=Math.sin(p.yaw)*separation;p.position.z+=Math.cos(p.yaw)*separation;return p;
+ p.position.x+=Math.cos(p.yaw)*separation;p.position.z-=Math.sin(p.yaw)*separation;return p;
 }
 export function createSwimmer(scene:T.Scene){
  const c=createDuck();c.root.scale.setScalar(.40);c.feet.forEach(f=>f.visible=false);scene.add(c.root);

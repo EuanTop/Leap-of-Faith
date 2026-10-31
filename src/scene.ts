@@ -46,7 +46,7 @@ export async function createArtwork(){
     renderer.shadowMap.needsUpdate=target===aboveWorld;renderer.render(scene,camera);renderer.render(mirror.scene,camera);
    }
   }finally{renderer.clippingPlanes=[];renderer.autoClear=autoClear;renderer.setClearColor(clear,alpha);renderer.setRenderTarget(null);}
-  lake.setView(camera,w,h,belowWorld.texture,ex.backgroundAngle);finishing.update(state.postStyle??'prism',state.postStrength??.7,w,h);composer.render(0);frameCount++;frameMs=performance.now()-begin;if(errors.length)throw Error('Shader compilation: '+errors.join('\n'));
+  lake.setView(camera,w,h,belowWorld.texture,ex.backgroundAngle);finishing.update(state.postStyle??'etching',state.postStrength??.45,w,h);composer.render(0);frameCount++;frameMs=performance.now()-begin;if(errors.length)throw Error('Shader compilation: '+errors.join('\n'));
   return {canvas:renderer.domElement,story:{t,daylight:ex.daylight,backgroundAngle:ex.backgroundAngle},renderer};
  }
  function dispose(){const geos=new Set<T.BufferGeometry>(),mats=new Set<T.Material>();[scene,mirror.scene].forEach(s=>s.traverse(o=>{if(o instanceof T.Mesh){geos.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:[o.material])mats.add(m);if(o.customDepthMaterial)mats.add(o.customDepthMaterial);}if(o instanceof T.DirectionalLight||o instanceof T.SpotLight||o instanceof T.PointLight)o.shadow.dispose();}));geos.forEach(g=>g.dispose());mats.forEach(m=>m.dispose());finishing.pass.dispose();lake.pass.dispose();env.dispose();bloom.dispose();output.dispose();texturePass.dispose();aboveWorld.dispose();belowWorld.dispose();composer.dispose();renderer.dispose();}
