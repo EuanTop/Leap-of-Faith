@@ -73,7 +73,8 @@ void main() {
   float coverage=clamp(sampleColour.a,0.,1.);
   vec3 reflected=sampleColour.rgb/max(coverage,.001);
   vec2 field=(vUv-.5)*vec2(aspect,1.);
-  float fromTop=.5-field.y*cos(backgroundAngle)-field.x*sin(backgroundAngle);
+  // Inverse-map the colour field so its visible turn follows the 3D buildings.
+  float fromTop=.5-field.y*cos(backgroundAngle)+field.x*sin(backgroundAngle);
   vec3 background=artworkBackground(fromTop);
   float reflectance=mix(.72,.95,fresnel);
   vec3 col=mix(background,reflected,coverage*reflectance);
