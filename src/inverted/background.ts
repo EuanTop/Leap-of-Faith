@@ -7,7 +7,9 @@ vec3 artworkBackground(float fromTop) {
  vec3 violet=vec3(.122,.037,.191);
  vec3 rose=vec3(.491,.191,.296);
  vec3 daylight=vec3(.922,.723,.376);
- vec3 c=mix(night,violet,smoothstep(0.,.55,y));
- c=mix(c,rose,smoothstep(.48,.81,y));
- return mix(c,daylight,smoothstep(.69,1.,y));
+ // Centre the violet/daylight transition: neither world is confined to an edge.
+ float blend=smoothstep(.28,.72,y);
+ vec3 c=mix(night,violet,smoothstep(0.,.24,y));
+ c=mix(c,daylight,blend);
+ return mix(c,rose,.14*4.*blend*(1.-blend));
 }`;
