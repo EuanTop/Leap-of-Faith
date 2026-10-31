@@ -78,7 +78,7 @@ void main() {
   // There are no submerged scene objects in this artwork.
   vec3 through = refract(-view, normal, 1. / 1.333);
   float depthTint = clamp(-through.y, 0., 1.);
-  vec3 body = mix(vec3(.020, .015, .060), vec3(.042, .032, .095), depthTint);
+  vec3 body = color * mix(.15, .42, depthTint);
   float reflectance = mix(.56, .91, fresnel);
   vec3 col = mix(body, reflected, reflectance);
 
@@ -87,9 +87,9 @@ void main() {
                     + .9 * sin(dot(p, vec2(-.707, .089)) - phase * 2.))), 20.);
   float broken = smoothstep(.28, .82, sin(p.x * .73 + sin(p.y * .23) + phase * 2.));
   float light = smoothstep(.035, .34, dot(reflected, vec3(.2126, .7152, .0722)));
-  col += vec3(.10, .08, .16) * crest * broken * (.12 + light) * wind * .22;
+  col += vec3(.18, .14, .08) * crest * broken * (.12 + light) * wind * .22;
 
-  float distanceFog = 1. - exp(-max(0., length(vWorld-cameraPosition)-90.) * .020);
+  float distanceFog = 1. - exp(-max(0., length(vWorld-cameraPosition)-18.) * .050);
   col = mix(col, vec3(.045, .025, .082), distanceFog);
   gl_FragColor = vec4(col, 1.);
   #include <tonemapping_fragment>

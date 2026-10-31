@@ -6,9 +6,9 @@ import {LAKE_VERTEX,LAKE_FRAGMENT} from './lake-shader.ts';
 export function createLake(scene:T.Scene){
  const rippleHistory=Array.from({length:8},()=>new T.Vector4());
  const water=new Reflector(new T.PlaneGeometry(1200,1200),{
-  textureWidth:900,textureHeight:1200,clipBias:.003,multisample:2,color:'#1b1231',
+  textureWidth:900,textureHeight:1200,clipBias:.003,multisample:2,color:'#eedfbd',
   shader:{name:'Inverted house water',uniforms:{
-   color:{value:new T.Color('#1b1231')},tDiffuse:{value:null},textureMatrix:{value:new T.Matrix4()},
+   color:{value:new T.Color('#eedfbd')},tDiffuse:{value:null},textureMatrix:{value:new T.Matrix4()},
    phase:{value:0},wind:{value:1},trail:{value:1},swimmer:{value:new T.Vector2()},wakes:{value:rippleHistory}
   },vertexShader:LAKE_VERTEX,fragmentShader:LAKE_FRAGMENT}
  });

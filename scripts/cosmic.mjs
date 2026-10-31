@@ -140,7 +140,7 @@ export function addCosmicArrangement({ add, harmony, roots, duration, beat }) {
 // Separate dark-space return, with an exact circular FIR tail. The final taps
 // fall below -80 dB; unlike a newly initialised feedback delay, this already
 // contains the previous loop's tail. Bass and drums never enter this bus.
-export function diffuseSpace(inputL, inputR, sampleRate) {
+export function diffuseSpace(inputL, inputR, sampleRate, {decay=.66,stretch=1}={}) {
   const length = inputL.length;
   const filteredL = new Float64Array(length), filteredR = new Float64Array(length);
   const lowCoefficient = 1 - Math.exp(-TAU * 2600 / sampleRate);
@@ -155,10 +155,10 @@ export function diffuseSpace(inputL, inputR, sampleRate) {
   const left = new Float64Array(length), right = new Float64Array(length);
   // Deterministic non-uniform reflections avoid another obvious beat echo.
   for (let tap = 0; tap < 128; tap++) {
-    const seconds = .113 + tap * .0837 + .027 * Math.sin(tap * 2.39996);
+    const seconds = (.113 + tap * .0837 + .027 * Math.sin(tap * 2.39996)) * stretch;
     const delayL = Math.round(seconds * sampleRate) % length;
     const delayR = Math.round((seconds + .013 + .006 * Math.sin(tap * 1.37)) * sampleRate) % length;
-    const gain = .067 * Math.exp(-seconds * .66);
+    const gain = .067 * Math.exp(-seconds * decay);
     for (let i = 0; i < length; i++) {
       const a = (i - delayL + length) % length, b = (i - delayR + length) % length;
       left[i] += gain * ((tap % 2 ? filteredR[a] : filteredL[a]) * .78 + filteredR[b] * .22);

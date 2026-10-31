@@ -18,7 +18,7 @@ The development service owns state and task lifecycle. The panel and scripts use
 | POST | `/__art/music/render` | Full mix only; optional score version; rejects ranges |
 | GET | `/__art/audio` | Current synthesized WAV |
 
-Music requests regenerate a missing or outdated score from the shared synthesis source. WAV responses bypass browser caches; preview URLs also contain the score version. `npm run music` publishes complete files and writes version metadata last. The current score keeps the original 100 BPM groove, adds orbiting cosmic layers, and brings in a shadow organ from 19.2 seconds.
+Music requests regenerate a missing or outdated score from the shared synthesis source. WAV responses bypass browser caches; preview URLs also contain the score version. `npm run music` publishes complete files and writes version metadata last. The current score uses four 6/4 phrases at 50 BPM: long overlapping harmony, unpulsed low roots and four pitched duck/swan duets. All diffuse tails wrap in the circular PCM buffer.
 
 An accepted revision does not mean it has been drawn. The live page reports `appliedRevision` and `frameTime` after drawing. Capture jobs render the requested snapshot and frame directly. Uncertain task submissions can be retried with exactly the original payload and key; revision checks apply to new work after lookup of existing keys.
 
