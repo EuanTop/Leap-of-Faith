@@ -1,0 +1,26 @@
+node_modules
+dist/
+artifacts
+.DS_Store
+*.log
+.env*
+
+# Generated exports and publishing packages, even if copied outside artifacts.
+exports/
+audio-preview/
+social/
+*.mp4
+*.mkv
+*.mov
+*.webm
+*.wav
+*.mp3
+*.flac
+*.aiff
+*.aac
+*.pdf
+*.zip
+
+# Local browser profiles and caches.
+.cache/
+.vite/
