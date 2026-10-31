@@ -21,10 +21,10 @@ Open `http://127.0.0.1:5175/`. The collapsible panel shares its parameters with 
 ### Implementation
 
 - Parametric hanging towers, recessed archways, curved galleries and pumpkin pendants.
-- Real planar reflections with restrained, periodic GLSL distortion and historical swimming wakes.
+- A separately rendered mirror world: lighter lavender architecture, a differently phased ghost, and a swan following the yellow duck’s route. Periodic water normals, Fresnel response and historical swimming wakes shape the surface.
 - A continuous cloth ghost with head tracking, swaying and blinking; a procedural swimming duck.
 - The duck, cloth construction, lighting methods and original synthesized score are adapted from the preceding series artwork. The spatial composition is rebuilt here.
-- Local fonts and procedural geometry. The active scene modules are in `src/inverted/`; earlier studies remain in the source tree.
+- Local fonts, procedural geometry and the authored swan GLB from the series’ Crescent Lake artwork. The active scene modules are in `src/inverted/`; earlier studies remain in the source tree.
 
 ```sh
 npm run build

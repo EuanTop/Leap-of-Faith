@@ -4,7 +4,7 @@ import {wall,trim,edge,iron,glow,glass,stone} from './materials.ts';
 import {DURATION,TAU} from '../story.ts';
 
 export const GHOST_HOME=new T.Vector3(-.72,9.20,5.18);
-export function createArchitecture(scene:T.Scene){
+export function createArchitecture(scene:T.Scene,mirror=false){
  const root=new T.Group();root.name='Inverted house / suspended from above';root.position.y=-3;root.scale.x=1.20;scene.add(root);
  const candles:{mesh:T.Mesh;phase:number;light?:T.PointLight}[]=[],pendants:{group:T.Group;phase:number}[]=[];
  const amber=new T.ShaderMaterial({side:T.DoubleSide,uniforms:{phase:{value:0}},vertexShader:`varying vec2 q;void main(){q=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,fragmentShader:`varying vec2 q;uniform float phase;void main(){float hot=exp(-pow(q.x*.8,2.)-pow((q.y-1.5)*.3,2.));vec3 c=mix(vec3(.21,.030,.020),vec3(1.9,.62,.10),hot)*(.96+.04*sin(phase));gl_FragColor=vec4(c,1.);
@@ -45,16 +45,16 @@ export function createArchitecture(scene:T.Scene){
   const light=new T.PointLight('#ffb257',hero?8:13,12,2);light.position.set(0,2.4,.25);g.add(light);const spill=new T.PointLight('#ffae57',hero?3:7,10,2);spill.position.set(0,2.0,r+.65);g.add(spill);
   return g;
  }
- tower(new T.Vector3(-6.2,13.1,-1.0),1.75,8.6,true);
- tower(new T.Vector3(5.4,14.0,-2.4),2.05,8.0,true);
+ tower(new T.Vector3(-6.2,13.1,-1.0),mirror?1.95:1.75,mirror?9.3:8.6,true);
+ tower(new T.Vector3(5.4,14.0,-2.4),mirror?1.85:2.05,mirror?7.5:8.0,true);
  const home=tower(new T.Vector3(-.6,10.0,4.2),1.90,8.4,false,true);
  // Low curved parapet hides the robe's cropped lower edge, while the head remains visible.
  const lip=new T.Mesh(gallery(2.0,-.9,1.8,.76,.76,.18,.45),trim);home.add(lip);
  // Upper supporting mass is visibly cropped above the frame, anchoring the inverted world.
  const ceiling=new T.Group();root.add(ceiling);cylinder(ceiling,7.5,1.4,22.4,wall);cylinder(ceiling,7.8,.22,21.65,trim);cylinder(ceiling,4.5,10.0,27.8,wall);
- const ramp=new T.Mesh(gallery(6.3,-.6,Math.PI*2.15,20.6,14.9,1.85,.40),trim);ramp.castShadow=true;ramp.receiveShadow=true;root.add(ramp);
- const parapet=new T.Mesh(gallery(7.16,-.6,Math.PI*2.15,21.12,15.42,.18,.65),wall);parapet.castShadow=true;parapet.receiveShadow=true;root.add(parapet);
- const insideEdge=new T.Mesh(gallery(5.43,-.6,Math.PI*2.15,20.77,15.07,.12,.22),edge);root.add(insideEdge);
+ const ramp=new T.Mesh(gallery(6.3,-.6,Math.PI*(mirror?2.55:2.15),20.6,14.9,1.85,.40),trim);ramp.castShadow=true;ramp.receiveShadow=true;root.add(ramp);
+ const parapet=new T.Mesh(gallery(7.16,-.6,Math.PI*(mirror?2.55:2.15),21.12,15.42,.18,.65),wall);parapet.castShadow=true;parapet.receiveShadow=true;root.add(parapet);
+ const insideEdge=new T.Mesh(gallery(5.43,-.6,Math.PI*(mirror?2.55:2.15),20.77,15.07,.12,.22),edge);root.add(insideEdge);
  // Inverted stepped termination below the central chamber.
  for(let i=0;i<8;i++)block(root,[1.75-i*.14,.28,1.20-i*.085],[-.6,9.60-i*.32,4.2+i*.04],i%2?wall:trim);
  // Hung lanterns are light sources, not repeating furniture props.

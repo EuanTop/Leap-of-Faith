@@ -3,7 +3,7 @@ import {createArtwork} from './scene.ts';
 import {LoopAudio} from './loop-audio.ts';
 import {DEFAULTS,DURATION,wrap,FRAME_FORMATS,type ArtState} from './story.ts';
 
-const artwork=createArtwork();
+const artwork=await createArtwork();
 const canvas=document.querySelector<HTMLCanvasElement>('#scene')!;
 const ctx=canvas.getContext('2d',{alpha:false})!;
 let state={...DEFAULTS},revision=0,frameTime=0,ready=false;
