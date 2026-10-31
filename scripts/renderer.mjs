@@ -29,7 +29,7 @@ export class Renderer {
   const targets=await (await fetch(`http://127.0.0.1:${port}/json/list`)).json();
   const target=targets.find(t=>t.type==='page');if(!target)throw Error('Renderer page missing');
   this.socket=new WebSocket(target.webSocketDebuggerUrl);await once(this.socket,'open');
-  this.socket.addEventListener('message',e=>{const msg=JSON.parse(e.data);if(msg.id){const entry=this.pending.get(msg.id);if(entry){this.pending.delete(msg.id);clearTimeout(entry.timer);msg.error?entry.reject(Error(msg.error.message)):entry.resolve(msg.result)}}});
+  this.socket.addEventListener('message',e=>{const msg=JSON.parse(e.data);if(msg.method==='Runtime.exceptionThrown')this.pageError=msg.params.exceptionDetails.exception?.description||msg.params.exceptionDetails.text;if(msg.id){const entry=this.pending.get(msg.id);if(entry){this.pending.delete(msg.id);clearTimeout(entry.timer);msg.error?entry.reject(Error(msg.error.message)):entry.resolve(msg.result)}}});
   this.socket.addEventListener('close',()=>{this.ready=false;this.connecting=undefined;for(const e of this.pending.values()){clearTimeout(e.timer);e.reject(Error('Renderer disconnected'))}this.pending.clear()});
   await this.call('Page.enable');await this.call('Runtime.enable');
   this.stamp=await this.sourceStamp();
@@ -38,7 +38,7 @@ export class Renderer {
    const r=await this.call('Runtime.evaluate',{expression:`Boolean(window.art?.ready)&&new URL(location.href).searchParams.get('source')===${JSON.stringify(this.stamp)}`,returnByValue:true});
    if(r.result?.value){found=true;break}await new Promise(r=>setTimeout(r,100));
   }
-  if(!found){const r=await this.call('Runtime.evaluate',{expression:'document.body.innerText',returnByValue:true});throw Error('Renderer not ready: '+r.result?.value+' '+this.log)}
+  if(!found){const r=await this.call('Runtime.evaluate',{expression:'document.body.innerText',returnByValue:true});throw Error('Renderer not ready: '+(this.pageError||r.result?.value)+' '+this.log.slice(-300))}
   this.ready=true;
  }
  call(method,params={},timeout=90000){

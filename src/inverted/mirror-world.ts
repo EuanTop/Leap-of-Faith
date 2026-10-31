@@ -2,8 +2,9 @@ import * as T from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {createArchitecture} from './architecture.ts';
 import {wall,trim,edge,iron,glass,glow} from './materials.ts';
-import {createResident,duckPose} from './actors.ts';
+import {createResident,duckPose,swimPosition} from './actors.ts';
 import {DURATION,TAU,wrap} from '../story.ts';
+import {exchangeAt} from './exchange.mjs';
 
 /** A second scene shares the viewpoint, never the duck or the warm house materials. */
 export async function createMirrorWorld(source:T.Scene){
@@ -48,24 +49,26 @@ export async function createMirrorWorld(source:T.Scene){
  model.updateMatrixWorld(true);
  const bounds=new T.Box3().setFromObject(model),size=bounds.getSize(new T.Vector3());
  const scale=1.85/size.z;model.scale.setScalar(scale);
- model.position.set(-(bounds.min.x+bounds.max.x)*scale*.5,-.19, -(bounds.min.z+bounds.max.z)*scale*.5);
- const wings:T.Object3D[]=[];
+ model.position.set(-(bounds.min.x+bounds.max.x)*scale*.5,-bounds.min.y*scale-.035, -(bounds.min.z+bounds.max.z)*scale*.5);
+ const wingParts=[[],[]] as T.Object3D[][];
  model.traverse(o=>{
-  if(/^wing_(left|right)_/.test(o.name))wings.push(o);
+  if(/^wing_left_/.test(o.name))wingParts[0]!.push(o);
+  if(/^wing_right_/.test(o.name))wingParts[1]!.push(o);
   if(o instanceof T.Mesh){o.castShadow=false;o.receiveShadow=false;
    o.material=Array.isArray(o.material)?o.material.map(m=>m.clone()):o.material.clone();
    for(const mat of Array.isArray(o.material)?o.material:[o.material])if(mat instanceof T.MeshStandardMaterial){mat.roughness=.55;mat.envMapIntensity=.8;}
   }
  });
- const restWings=wings.map(o=>o.rotation.clone());
+ model.updateWorldMatrix(true,true);
+ const wings=wingParts.map((parts,i)=>{const sign=i?1:-1,pivot=new T.Group();pivot.name='Swan shoulder hinge';pivot.position.set(sign*.23,.61,.30);model.add(pivot);pivot.updateWorldMatrix(true,false);parts.forEach(p=>pivot.attach(p));return {pivot,sign};});
  return {scene,swan,house,ghost,update(time:number,motion:number){
-  const phase=wrap(time)/DURATION*TAU,p=duckPose(time);
+  const phase=wrap(time)/DURATION*TAU,p=swimPosition(time,'swan'),ex=exchangeAt(time);
   house.update(time,motion);
   for(const m of materials.values())if(m instanceof T.ShaderMaterial&&m.uniforms.phase)m.uniforms.phase.value=phase*3;
   // The ghost is a synchronous reflection; the duck alone has another identity.
   ghost.update(time,p.position,motion);
-  swan.position.copy(p.position);swan.position.y=.014*Math.sin(phase*8)*motion;
-  swan.rotation.set(.012*Math.sin(phase*6)*motion,p.yaw,.016*Math.sin(phase*8)*motion);
-  wings.forEach((w,i)=>{w.rotation.copy(restWings[i]!);w.rotation.z+=.018*Math.sin(phase*4)*motion;});
+  swan.position.copy(p.position);swan.position.y=.014*Math.sin(phase*8)*motion+ex.swanHeight;
+  swan.rotation.set(-ex.pitch+.012*Math.sin(phase*6)*motion,p.yaw,0,'YXZ');swan.rotateZ(Math.PI-ex.actorAngle+.016*Math.sin(phase*8)*motion);
+  wings.forEach(({pivot,sign})=>{const burst=ex.swanFlap*(.12+.63*Math.sin(ex.flapClock*3.2)**2)*Math.min(1.4,motion);pivot.rotation.z=sign*(.018*Math.sin(phase*4)*motion+burst);pivot.rotation.x=burst*.10;});
  }};
 }

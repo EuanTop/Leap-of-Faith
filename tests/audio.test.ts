@@ -29,7 +29,7 @@ test('duck and swan voices form four overlapping harmonic duets, not a percussio
  const duck=original('duck-voice'),swan=original('swan-voice');assert.equal(duck.length,4);assert.equal(swan.length,4);
  for(let i=0;i<4;i++){
   assert.ok(duck[i].end-duck[i].start>2.4);assert.ok(swan[i].end-swan[i].start>4);
-  assert.ok(swan[i].start<duck[i].end);assert.ok([3,4].includes(swan[i].pitch-duck[i].pitch));
+  assert.ok(swan[i].start<duck[i].end);assert.ok([3,4,7,9].includes(swan[i].pitch-duck[i].pitch));
  }
  assert.ok(!score.events.some((e:any)=>/kick|snare|shaker|electric-bass/.test(e.track)));
  assert.equal(original('gravity').length,4);assert.equal(original('tidal-harmony').length,20);

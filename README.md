@@ -3,7 +3,7 @@
 <p align="center"><strong>English</strong> · <a href="README.zh-CN.md">简体中文</a></p>
 <p align="center"><img src="docs/preview.webp" width="420" alt="A suspended house, a ghost at its doorway, and a duck on reflecting water"></p>
 
-A suspended house above still water. A ghost watches a small yellow duck from its doorway; their reflections meet below. By **@EuanTop**.
+Two suspended worlds meet at the water. A duck and a swan cross between night and daylight; the resident ghosts lean out and respond to the turning architecture. By **@EuanTop**.
 
 This is a visual development build. The current scene has not been exported as a finished film.
 
@@ -21,11 +21,11 @@ Open `http://127.0.0.1:5175/`. The collapsible panel shares its parameters with 
 ### Implementation
 
 - Parametric hanging towers, recessed archways, curved galleries and pumpkin pendants.
-- A single black–violet–gold background spans sky and water; the alternate reflection renders with a transparent background to avoid a separate horizon.
-- A separately rendered mirror world: daylight ivory architecture, a synchronously reflected dark ghost with pale eyes, and a swan following the yellow duck’s route. Periodic water normals, Fresnel response and historical swimming wakes shape the surface.
-- A continuous cloth ghost with head tracking, swaying and blinking; a procedural swimming duck.
+- A continuous black–violet–gold field changes direction after the spatial turn, without a separate horizon.
+- Both worlds use permanent 3D geometry. Water-plane clipping separates the upper and lower views; only submerged geometry receives wave distortion. The gallery and three spires have their own motion.
+- Cloth residents anticipate the exchange, counter-lean during rotation and settle with delayed responses. Duck and swan shoulder hinges drive distinct wing gestures; continuous forward arcs carry both through the water.
 - The duck, cloth construction and lighting methods are adapted from the preceding series artwork. The space and score are rebuilt here.
-- A new 50 BPM, unpulsed ambient score: long harmony, centred low roots, orbiting common tones and pitched duck/swan duets. Circular stereo reverberation preserves the loop.
+- A new 50 BPM, unpulsed ambient score: long harmony, centred low roots, orbiting common tones and pitched duck/swan duets that exchange melody and harmony roles without changing tempo. Circular stereo reverberation preserves the loop.
 - Local fonts, procedural geometry and the authored swan GLB from the series’ Crescent Lake artwork. The active scene modules are in `src/inverted/`; earlier studies remain in the source tree.
 
 ```sh
