@@ -8,14 +8,18 @@ import {createArchitecture} from './inverted/architecture.ts';
 import {createSwimmer,createResident} from './inverted/actors.ts';
 import {createLake} from './inverted/water.ts';
 import {createMirrorWorld} from './inverted/mirror-world.ts';
+import {BACKGROUND_GLSL} from './inverted/background.ts';
 import {wrap,type ArtState} from './story.ts';
 
 export async function createArtwork(){
  const scene=new T.Scene();scene.background=new T.Color('#1b1231');
- const atmosphere=new T.Mesh(new T.SphereGeometry(900,24,16),new T.ShaderMaterial({side:T.BackSide,depthWrite:false,vertexShader:`varying vec3 direction;void main(){direction=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,fragmentShader:`varying vec3 direction;void main(){vec3 n=normalize(direction);float haze=pow(1.-abs(n.y),12.);vec3 c=vec3(.010,.005,.027)+vec3(.035,.020,.055)*haze;gl_FragColor=vec4(c,1.);
+ const atmosphereMaterial=new T.ShaderMaterial({side:T.BackSide,depthWrite:false,uniforms:{viewportHeight:{value:1200}},vertexShader:`void main(){gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,fragmentShader:`uniform float viewportHeight;
+ ${BACKGROUND_GLSL}
+ void main(){gl_FragColor=vec4(artworkBackground(1.-gl_FragCoord.y/viewportHeight),1.);
  #include <tonemapping_fragment>
  #include <colorspace_fragment>
- }`}));scene.add(atmosphere);
+ }`});
+ const atmosphere=new T.Mesh(new T.SphereGeometry(900,24,16),atmosphereMaterial);scene.add(atmosphere);
  const camera=new T.PerspectiveCamera(43,.75,.10,2400),renderer=new T.WebGLRenderer({antialias:true,alpha:false,preserveDrawingBuffer:true,powerPreference:'high-performance'});renderer.localClippingEnabled=true;renderer.setPixelRatio(1);renderer.outputColorSpace=T.SRGBColorSpace;
  const errors:string[]=[];renderer.debug.onShaderError=(gl,p,v,f)=>{errors.push((gl.getProgramInfoLog(p)||'')+(gl.getShaderInfoLog(v)||'')+(gl.getShaderInfoLog(f)||''));};
  renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFShadowMap;renderer.shadowMap.autoUpdate=false;renderer.info.autoReset=false;
@@ -26,11 +30,16 @@ export async function createArtwork(){
  const house=createArchitecture(scene),duck=createSwimmer(scene),ghost=createResident(scene),lake=createLake(scene);
  const mirror=await createMirrorWorld(scene);
  const reflect=lake.water.onBeforeRender;
- lake.water.onBeforeRender=(renderer,_scene,camera,geometry,material,group)=>reflect.call(lake.water,renderer,mirror.scene,camera,geometry,material,group);
+ const savedClear=new T.Color();
+ lake.water.onBeforeRender=(renderer,_scene,camera,geometry,material,group)=>{
+  const alpha=renderer.getClearAlpha();renderer.getClearColor(savedClear);renderer.setClearColor(0x000000,0);
+  try{reflect.call(lake.water,renderer,mirror.scene,camera,geometry,material,group);}
+  finally{renderer.setClearColor(savedClear,alpha);}
+ };
  const target=new T.WebGLRenderTarget(1,1,{type:T.HalfFloatType,samples:4}),composer=new EffectComposer(renderer,target);composer.addPass(new RenderPass(scene,camera));const bloom=new UnrealBloomPass(new T.Vector2(720,960),.06,.25,2.5);composer.addPass(bloom);const output=new OutputPass();composer.addPass(output);
  let width=0,height=0,frameCount=0,frameMs=0;
  function render(time:number,w:number,h:number,state:ArtState){const begin=performance.now(),t=wrap(time);renderer.info.reset();
-  if(w!==width||h!==height){renderer.setSize(w,h,false);composer.setSize(w,h);lake.resize(w,h);width=w;height=h;}
+  if(w!==width||h!==height){renderer.setSize(w,h,false);composer.setSize(w,h);lake.resize(w,h);atmosphereMaterial.uniforms.viewportHeight!.value=h;width=w;height=h;}
   camera.aspect=w/h;camera.fov=state.cameraFov+8;const angle=(12+(state.cameraTilt-40)*.35)*Math.PI/180;
   const focus=new T.Vector3(0,2.8,0),distance=48*Math.max(1,.75/(w/h));camera.position.set(Math.sin(angle)*distance,2.8,Math.cos(angle)*distance);camera.lookAt(focus);camera.updateProjectionMatrix();camera.updateMatrixWorld();
   (scene.background as T.Color).set(state.palette==='nocturne'?'#1b1231':state.palette==='ultraviolet'?'#3a2051':'#3a2b50');

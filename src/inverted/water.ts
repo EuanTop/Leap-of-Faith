@@ -9,7 +9,7 @@ export function createLake(scene:T.Scene){
   textureWidth:900,textureHeight:1200,clipBias:.003,multisample:2,color:'#eedfbd',
   shader:{name:'Inverted house water',uniforms:{
    color:{value:new T.Color('#eedfbd')},tDiffuse:{value:null},textureMatrix:{value:new T.Matrix4()},
-   phase:{value:0},wind:{value:1},trail:{value:1},swimmer:{value:new T.Vector2()},wakes:{value:rippleHistory}
+   viewportHeight:{value:1200},phase:{value:0},wind:{value:1},trail:{value:1},swimmer:{value:new T.Vector2()},wakes:{value:rippleHistory}
   },vertexShader:LAKE_VERTEX,fragmentShader:LAKE_FRAGMENT}
  });
  water.rotation.x=-Math.PI/2;water.position.y=-.025;scene.add(water);
@@ -21,7 +21,7 @@ export function createLake(scene:T.Scene){
   for(let j=0;j<=segments;j++){alpha[j*2]=alpha[j*2+1]=Math.sin(j/segments*Math.PI)**.8;across[j*2]=-1;across[j*2+1]=1;if(j<segments){const k=j*2;ids.push(k,k+1,k+2,k+1,k+3,k+2);}}
   g.setAttribute('alpha',new T.BufferAttribute(alpha,1));g.setAttribute('across',new T.BufferAttribute(across,1));g.setIndex(ids);const m=new T.Mesh(g,mat.clone());m.frustumCulled=false;m.renderOrder=2;wakes.push(m);scene.add(m);
  }
- return {water,resize(w:number,h:number){water.getRenderTarget().setSize(Math.min(w,1440),Math.min(h,1920));},update(time:number,wind:number,trail:number){const shader=water.material as T.ShaderMaterial;shader.uniforms.phase!.value=time/DURATION*TAU;shader.uniforms.wind!.value=wind;shader.uniforms.trail!.value=trail;
+ return {water,resize(w:number,h:number){(water.material as T.ShaderMaterial).uniforms.viewportHeight!.value=h;water.getRenderTarget().setSize(Math.min(w,1440),Math.min(h,1920));},update(time:number,wind:number,trail:number){const shader=water.material as T.ShaderMaterial;shader.uniforms.phase!.value=time/DURATION*TAU;shader.uniforms.wind!.value=wind;shader.uniforms.trail!.value=trail;
   const swimmer=duckPose(time).position;shader.uniforms.swimmer!.value.set(swimmer.x,swimmer.z);
   const history=shader.uniforms.wakes!.value as T.Vector4[];
   history.forEach((v,i)=>{const born=(Math.floor(time/.48)-i)*.48,age=time-born,sample=duckPose(born);v.set(sample.position.x-Math.sin(sample.yaw)*.45,sample.position.z-Math.cos(sample.yaw)*.45,sample.yaw,age);});

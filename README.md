@@ -21,6 +21,7 @@ Open `http://127.0.0.1:5175/`. The collapsible panel shares its parameters with 
 ### Implementation
 
 - Parametric hanging towers, recessed archways, curved galleries and pumpkin pendants.
+- A single black–violet–gold background spans sky and water; the alternate reflection renders with a transparent background to avoid a separate horizon.
 - A separately rendered mirror world: daylight ivory architecture, a synchronously reflected dark ghost with pale eyes, and a swan following the yellow duck’s route. Periodic water normals, Fresnel response and historical swimming wakes shape the surface.
 - A continuous cloth ghost with head tracking, swaying and blinking; a procedural swimming duck.
 - The duck, cloth construction and lighting methods are adapted from the preceding series artwork. The space and score are rebuilt here.

@@ -8,7 +8,7 @@ import {DURATION,TAU,wrap} from '../story.ts';
 /** A second scene shares the viewpoint, never the duck or the warm house materials. */
 export async function createMirrorWorld(source:T.Scene){
  const scene=new T.Scene();
- scene.background=new T.Color('#f8e7bf');
+ scene.background=null;
  scene.environment=source.environment;
  scene.environmentIntensity=.8;
  // Daylight shares the light direction, while reversing the night palette.

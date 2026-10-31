@@ -1,0 +1,13 @@
+// One screen-space colour field is shared by the sky and water. Keeping the
+// reflection background transparent prevents a second horizon from being composited.
+export const BACKGROUND_GLSL = `
+vec3 artworkBackground(float fromTop) {
+ float y=clamp(fromTop,0.,1.);
+ vec3 night=vec3(.0052,.0024,.0110);
+ vec3 violet=vec3(.122,.037,.191);
+ vec3 rose=vec3(.491,.191,.296);
+ vec3 daylight=vec3(.922,.723,.376);
+ vec3 c=mix(night,violet,smoothstep(0.,.55,y));
+ c=mix(c,rose,smoothstep(.48,.81,y));
+ return mix(c,daylight,smoothstep(.69,1.,y));
+}`;

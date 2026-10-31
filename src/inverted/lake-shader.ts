@@ -1,3 +1,4 @@
+import {BACKGROUND_GLSL} from './background.ts';
 // The reflection is rendered from the scene; wave slopes bend its projective lookup.
 // All temporal frequencies are integers of the artwork loop, including the wakes.
 export const LAKE_VERTEX = `
@@ -16,6 +17,8 @@ uniform sampler2D tDiffuse;
 uniform float phase, wind, trail;
 uniform vec3 color;
 uniform vec2 swimmer;
+uniform float viewportHeight;
+${BACKGROUND_GLSL}
 uniform vec4 wakes[8]; // world x, z, heading, age
 varying vec4 vReflection;
 varying vec3 vWorld;
@@ -65,32 +68,23 @@ void main() {
   bend.x += slope.y * .010;
   vec2 reflectedUV = uv + bend;
   vec2 spread = vec2(.0010, .0004) * ( .35 + length(slope) * 3. );
-  vec3 reflected = texture2D(tDiffuse, reflectedUV).rgb * .66;
-  reflected += texture2D(tDiffuse, reflectedUV + spread).rgb * .17;
-  reflected += texture2D(tDiffuse, reflectedUV - spread).rgb * .17;
-
-  // A narrow chromatic split is confined to stronger wave faces.
-  float dispersion = smoothstep(.09, .26, length(slope)) * .16;
-  reflected.r = mix(reflected.r, texture2D(tDiffuse, reflectedUV + bend * .045).r, dispersion);
-  reflected.b = mix(reflected.b, texture2D(tDiffuse, reflectedUV - bend * .045).b, dispersion);
-
-  // Snell direction supplies a cool, absorptive water body below the reflection.
-  // There are no submerged scene objects in this artwork.
-  vec3 through = refract(-view, normal, 1. / 1.333);
-  float depthTint = clamp(-through.y, 0., 1.);
-  vec3 body = color * mix(.15, .42, depthTint);
-  float reflectance = mix(.56, .91, fresnel);
-  vec3 col = mix(body, reflected, reflectance);
+  vec4 sampleColour = texture2D(tDiffuse, reflectedUV) * .66;
+  sampleColour += texture2D(tDiffuse, reflectedUV + spread) * .17;
+  sampleColour += texture2D(tDiffuse, reflectedUV - spread) * .17;
+  float coverage=clamp(sampleColour.a,0.,1.);
+  vec3 reflected=sampleColour.rgb/max(coverage,.001);
+  float fromTop=1.-gl_FragCoord.y/viewportHeight;
+  vec3 background=artworkBackground(fromTop);
+  float reflectance=mix(.72,.95,fresnel);
+  vec3 col=mix(background,reflected,coverage*reflectance);
 
   // Sparse, broken lilac wave crests pick up the same local reflected illumination.
   float crest = pow(max(0., sin(dot(p, vec2(.24, 1.91)) + phase * 7.
                     + .9 * sin(dot(p, vec2(-.707, .089)) - phase * 2.))), 20.);
   float broken = smoothstep(.28, .82, sin(p.x * .73 + sin(p.y * .23) + phase * 2.));
   float light = smoothstep(.035, .34, dot(reflected, vec3(.2126, .7152, .0722)));
-  col += vec3(.18, .14, .08) * crest * broken * (.12 + light) * wind * .22;
+  col += vec3(.18, .14, .08) * crest * broken * (.12 + light) * wind * .22 * smoothstep(.52,.78,fromTop);
 
-  float distanceFog = 1. - exp(-max(0., length(vWorld-cameraPosition)-18.) * .050);
-  col = mix(col, vec3(.045, .025, .082), distanceFog);
   gl_FragColor = vec4(col, 1.);
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
