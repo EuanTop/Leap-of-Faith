@@ -10,8 +10,8 @@ import {VERSION as MUSIC_VERSION} from './compose.mjs';
 import {exportStamp,pointLatest} from './export-history.mjs';
 
 const DURATION=28.8,FPS=30,FRAMES=864;
-export const defaults={time:0,paused:false,motion:.95,river:.9,trail:1.35,palette:'nocturne',cameraTilt:40,cameraFov:35,aspect:'3:4',music:true,volume:.8};
-export const schema={time:{type:'number',min:0,max:28.8,unit:'seconds'},paused:{type:'boolean'},motion:{type:'number',min:0,max:2},river:{type:'number',min:0,max:1},trail:{type:'number',min:0,max:2},palette:{enum:['violet','ultraviolet','nocturne']},cameraTilt:{type:'number',min:22,max:58,unit:'degrees'},cameraFov:{type:'number',min:28,max:52,unit:'degrees'},aspect:{enum:['3:4','9:16','16:9']},music:{type:'boolean'},volume:{type:'number',min:0,max:1}};
+export const defaults={time:0,paused:false,motion:.95,river:.9,trail:1.35,palette:'nocturne',cameraTilt:40,cameraFov:35,aspect:'3:4',music:true,volume:.8,postStyle:'prism',postStrength:.7};
+export const schema={time:{type:'number',min:0,max:28.8,unit:'seconds'},paused:{type:'boolean'},motion:{type:'number',min:0,max:2},river:{type:'number',min:0,max:1},trail:{type:'number',min:0,max:2},palette:{enum:['violet','ultraviolet','nocturne']},cameraTilt:{type:'number',min:22,max:58,unit:'degrees'},cameraFov:{type:'number',min:28,max:52,unit:'degrees'},aspect:{enum:['3:4','9:16','16:9']},music:{type:'boolean'},volume:{type:'number',min:0,max:1},postStyle:{enum:['original','prism','film','etching']},postStrength:{type:'number',min:0,max:1}};
 export function validatePatch(patch){
  if(!patch||typeof patch!=='object'||Array.isArray(patch))throw Error('Expected patch object');
  for(const [k,v] of Object.entries(patch)){
@@ -53,7 +53,7 @@ export function controlPlugin(){
   const w=b.width??1440,h=b.height??1920;
   if(!Number.isInteger(w)||!Number.isInteger(h)||w<64||h<64||w>3840||h>3840||w*h>2880*3840)throw Error('Unsupported capture size');
   const t=b.time??j.snapshot.time;if(!Number.isFinite(t)||t<0||t>DURATION)throw Error('Invalid capture time');
-  j.stage='rendering';const png=await renderer.frame(t,w,h,j.snapshot);checkCancel(j);
+  j.stage='rendering';const renderState={...j.snapshot,...validatePatch(b.overrides??{})};const png=await renderer.frame(t,w,h,renderState);checkCancel(j);
   const path=join(root,'artifacts/images',`frame-${t.toFixed(2)}.png`);await mkdir(join(root,'artifacts/images'),{recursive:true});await writeFile(path,png);j.files=[{path,width:w,height:h,time:t}];j.frameTime=t;j.appliedRevision=j.revision;
  }
  async function video(j,b){

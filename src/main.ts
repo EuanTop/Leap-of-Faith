@@ -21,7 +21,7 @@ function draw(t:number,w:number,h:number,s:ArtState){
  ctx.drawImage(output.canvas,0,0,w,h);
  const margin=w*.066;
  const day=output.story.daylight;
- const textInk=(x:number,y:number)=>{const a=output.story.backgroundAngle,field=.5-(.5-y)*Math.cos(a)-(x-.5)*w/h*Math.sin(a);let blend=Math.max(0,Math.min(1,(field-.50)/.30));blend=blend*blend*(3-2*blend);return `rgb(${[255,246,212].map((v,i)=>Math.round(v*(1-blend)+[59,30,78][i]!*blend)).join(',')})`;};
+ const textInk=(x:number,y:number)=>{const a=output.story.backgroundAngle,field=.5-(.5-y)*Math.cos(a)-(x-.5)*w/h*Math.sin(a);let blend=Math.max(0,Math.min(1,(field-.50)/.30));blend=blend*blend*(3-2*blend);if(s.postStyle==='etching'&&s.postStrength>.35)blend=1;return `rgb(${[255,246,212].map((v,i)=>Math.round(v*(1-blend)+[59,30,78][i]!*blend)).join(',')})`;};
  const ink=textInk(.066,.046);ctx.fillStyle=ink;ctx.textBaseline='top';
  ctx.font=`${w*.052}px Artwork, Georgia, serif`;
  ctx.fillText('Upside Down',margin,h*.046);
@@ -30,8 +30,8 @@ function draw(t:number,w:number,h:number,s:ArtState){
  ctx.fillStyle=ink;ctx.fillText('ALL HALLOWS’ EVE.',margin,h*.046+w*.058);
  ctx.letterSpacing='0px';
  ctx.font=`${w*.022}px Artwork, Georgia, serif`;
- ctx.fillStyle=textInk(.934,.062);
- ctx.textAlign='right';ctx.fillText('@EuanTop',w-margin,h*.062);ctx.textAlign='left';
+ ctx.fillStyle=textInk(.934,.955);
+ ctx.textAlign='right';ctx.fillText('@EuanTop',w-margin,h*.955);ctx.textAlign='left';
  frameTime=wrap(t);
  const sound=audio.diagnostics;
  canvas.dataset.world=day>.5?'daylight-swan':'night-duck';
@@ -76,6 +76,8 @@ function message(value:string){const el=document.querySelector('#status');if(el)
 function controlMarkup(){return `<header><p>UPSIDE DOWN</p><button id="close" aria-label="Close controls">×</button></header>
  <label>Frame<select data-key="aspect"><option>3:4</option><option>9:16</option><option>16:9</option></select></label>
  <label>Palette<select data-key="palette"><option value="violet">Electric violet</option><option value="ultraviolet">Acid ultraviolet</option><option value="nocturne">Deep violet</option></select></label>
+ <label>Post-processing<select data-key="postStyle"><option value="original">Original</option><option value="prism">Prism Print</option><option value="film">Velvet Film</option><option value="etching">Violet Etching</option></select></label>
+ <label>Filter strength<input data-key="postStrength" type="range" min="0" max="1" step="0.05"></label>
  <label>View angle<input data-key="cameraTilt" type="range" min="22" max="58" step="1"></label>
  <label>Lens / field of view<input data-key="cameraFov" type="range" min="28" max="52" step="1"></label>
  <label>Expressiveness<input data-key="motion" type="range" min="0" max="2" step="0.05"></label>

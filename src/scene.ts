@@ -4,6 +4,7 @@ import {TexturePass} from 'three/addons/postprocessing/TexturePass.js';
 import {UnrealBloomPass} from 'three/addons/postprocessing/UnrealBloomPass.js';
 import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
 import {createWorldRig} from './inverted/world-rig.ts';
+import {createFinishing} from './inverted/finishing.ts';
 import {exchangeAt} from './inverted/exchange.mjs';
 import {createLightDesign} from './lighting.ts';
 import {createArchitecture} from './inverted/architecture.ts';
@@ -28,7 +29,7 @@ export async function createArtwork(){
  const belowWorld=new T.WebGLRenderTarget(1,1,{type:T.HalfFloatType,samples:4});
  const target=new T.WebGLRenderTarget(1,1,{type:T.HalfFloatType,samples:4}),composer=new EffectComposer(renderer,target);
  const texturePass=new TexturePass(aboveWorld.texture);composer.addPass(texturePass);composer.addPass(lake.pass);
- const bloom=new UnrealBloomPass(new T.Vector2(720,960),.06,.25,2.5);composer.addPass(bloom);const output=new OutputPass();composer.addPass(output);
+ const bloom=new UnrealBloomPass(new T.Vector2(720,960),.06,.25,2.5);composer.addPass(bloom);const output=new OutputPass();composer.addPass(output);const finishing=createFinishing();composer.addPass(finishing.pass);
  const upperClip=new T.Plane(new T.Vector3(0,1,0),0),lowerClip=new T.Plane(new T.Vector3(0,-1,0),0);
  let width=0,height=0,frameCount=0,frameMs=0;
  function render(time:number,w:number,h:number,state:ArtState){const begin=performance.now(),t=wrap(time);renderer.info.reset();
@@ -45,9 +46,9 @@ export async function createArtwork(){
     renderer.shadowMap.needsUpdate=target===aboveWorld;renderer.render(scene,camera);renderer.render(mirror.scene,camera);
    }
   }finally{renderer.clippingPlanes=[];renderer.autoClear=autoClear;renderer.setClearColor(clear,alpha);renderer.setRenderTarget(null);}
-  lake.setView(camera,w,h,belowWorld.texture,ex.backgroundAngle);composer.render(0);frameCount++;frameMs=performance.now()-begin;if(errors.length)throw Error('Shader compilation: '+errors.join('\n'));
+  lake.setView(camera,w,h,belowWorld.texture,ex.backgroundAngle);finishing.update(state.postStyle??'prism',state.postStrength??.7,w,h);composer.render(0);frameCount++;frameMs=performance.now()-begin;if(errors.length)throw Error('Shader compilation: '+errors.join('\n'));
   return {canvas:renderer.domElement,story:{t,daylight:ex.daylight,backgroundAngle:ex.backgroundAngle},renderer};
  }
- function dispose(){const geos=new Set<T.BufferGeometry>(),mats=new Set<T.Material>();[scene,mirror.scene].forEach(s=>s.traverse(o=>{if(o instanceof T.Mesh){geos.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:[o.material])mats.add(m);if(o.customDepthMaterial)mats.add(o.customDepthMaterial);}if(o instanceof T.DirectionalLight||o instanceof T.SpotLight||o instanceof T.PointLight)o.shadow.dispose();}));geos.forEach(g=>g.dispose());mats.forEach(m=>m.dispose());lake.pass.dispose();env.dispose();bloom.dispose();output.dispose();texturePass.dispose();aboveWorld.dispose();belowWorld.dispose();composer.dispose();renderer.dispose();}
+ function dispose(){const geos=new Set<T.BufferGeometry>(),mats=new Set<T.Material>();[scene,mirror.scene].forEach(s=>s.traverse(o=>{if(o instanceof T.Mesh){geos.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:[o.material])mats.add(m);if(o.customDepthMaterial)mats.add(o.customDepthMaterial);}if(o instanceof T.DirectionalLight||o instanceof T.SpotLight||o instanceof T.PointLight)o.shadow.dispose();}));geos.forEach(g=>g.dispose());mats.forEach(m=>m.dispose());finishing.pass.dispose();lake.pass.dispose();env.dispose();bloom.dispose();output.dispose();texturePass.dispose();aboveWorld.dispose();belowWorld.dispose();composer.dispose();renderer.dispose();}
  return {render,renderer,scene,camera,dispose,diagnostics(){return {frameCount,frameMs,shaderErrors:errors,...house.diagnostics(),drawCalls:renderer.info.render.calls,reflectionWorld:'continuous 3D twin worlds, split at the physical water plane',triangles:renderer.info.render.triangles};}};
 }
