@@ -21,11 +21,11 @@ function draw(t:number,w:number,h:number,s:ArtState){
  ctx.drawImage(output.canvas,0,0,w,h);
  const margin=w*.066;
  ctx.fillStyle=s.palette==='nocturne'?'#fff6d4':'#57219e';ctx.textBaseline='top';
- ctx.font=`${w*.069}px Artwork, Georgia, serif`;
- ctx.fillText('After Hours',margin,h*.046);
+ ctx.font=`${w*.052}px Artwork, Georgia, serif`;
+ ctx.fillText('Upside Down',margin,h*.046);
  ctx.font=`500 ${w*.013}px Inter, Helvetica, sans-serif`;
  ctx.letterSpacing=`${w*.0024}px`;
- ctx.fillStyle=s.palette==='nocturne'?'#fff6d4':'#67279f';ctx.fillText('OPEN AFTER DARK.',margin,h*.046+w*.074);
+ ctx.fillStyle=s.palette==='nocturne'?'#fff6d4':'#67279f';ctx.fillText('ALL HALLOWS’ EVE.',margin,h*.046+w*.058);
  ctx.letterSpacing='0px';
  ctx.font=`${w*.022}px Artwork, Georgia, serif`;
  ctx.fillStyle=s.palette==='nocturne'?'#f4e7cd':'#432274';
@@ -70,14 +70,14 @@ function unlockMusic(){void audio.unlock().then(()=>{if(state.music&&!state.paus
 document.addEventListener('pointerdown',()=>{if(state.music)unlockMusic()});
 
 function message(value:string){const el=document.querySelector('#status');if(el)el.textContent=value}
-function controlMarkup(){return `<header><p>AFTER HOURS</p><button id="close" aria-label="Close controls">×</button></header>
+function controlMarkup(){return `<header><p>UPSIDE DOWN</p><button id="close" aria-label="Close controls">×</button></header>
  <label>Frame<select data-key="aspect"><option>3:4</option><option>9:16</option><option>16:9</option></select></label>
  <label>Palette<select data-key="palette"><option value="violet">Electric violet</option><option value="ultraviolet">Acid ultraviolet</option><option value="nocturne">Deep violet</option></select></label>
- <label>Camera elevation<input data-key="cameraTilt" type="range" min="22" max="58" step="1"></label>
+ <label>View angle<input data-key="cameraTilt" type="range" min="22" max="58" step="1"></label>
  <label>Lens / field of view<input data-key="cameraFov" type="range" min="28" max="52" step="1"></label>
  <label>Expressiveness<input data-key="motion" type="range" min="0" max="2" step="0.05"></label>
- <label>Light trail<input data-key="trail" type="range" min="0" max="2" step="0.05"></label>
- <label>Starlight<input data-key="river" type="range" min="0" max="1" step="0.05"></label>
+ <label>Swimming wake<input data-key="trail" type="range" min="0" max="2" step="0.05"></label>
+ <label>Water movement<input data-key="river" type="range" min="0" max="1" step="0.05"></label>
  <label class="row">Music<input data-key="music" type="checkbox"></label>
  <label>Volume<input data-key="volume" type="range" min="0" max="1" step="0.01"></label>
  <label>Scene time<input data-key="time" type="range" min="0" max="28.799" step="0.02"></label>
@@ -121,4 +121,5 @@ function animate(now:number){
  requestAnimationFrame(animate);
 }
 draw(0,720,960,state);document.querySelector('#loader')?.remove();ready=true;requestAnimationFrame(animate);
-Object.assign(window,{art:{get ready(){return ready},renderFrame(t:number,w:number,h:number,s:ArtState){draw(t,w,h,s);return canvas.toDataURL('image/png')},snapshot:()=>({revision,frameTime,state,musicVersion:audio.version,audio:audio.diagnostics,renderer:artwork.renderer.info})}});
+addEventListener('pagehide',()=>artwork.dispose(),{once:true});
+Object.assign(window,{art:{get ready(){return ready},renderFrame(t:number,w:number,h:number,s:ArtState){draw(t,w,h,s);return canvas.toDataURL('image/png')},diagnostics:()=>artwork.diagnostics(),snapshot:()=>({revision,frameTime,state,musicVersion:audio.version,audio:audio.diagnostics,renderer:artwork.renderer.info})}});

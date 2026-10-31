@@ -6,6 +6,7 @@ The development service owns state and task lifecycle. The panel and scripts use
 | --- | --- | --- |
 | GET | `/__art` | Identity, capabilities, renderer state |
 | GET | `/__art/schema` | Parameter rules, defaults, profiles |
+| GET | `/__art/diagnostics` | Scene counts, frame metrics and shader errors |
 | GET | `/__art/state` | Revision, live clock, renderer acknowledgement |
 | PATCH | `/__art/state` | `{expectedRevision,patch}`; atomic validation |
 | POST | `/__art/capture` | `{revision,time,width,height,idempotencyKey}` |

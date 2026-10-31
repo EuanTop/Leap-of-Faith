@@ -77,7 +77,7 @@ export function controlPlugin(){
   const args=['-hide_banner','-loglevel','error','-y','-i',master,'-c:v','hevc_videotoolbox','-q:v','80','-tag:v','hvc1','-pix_fmt','yuv420p','-g','30','-c:a','aac','-b:a','256k','-movflags','+faststart',share];
   try{await run(process.env.FFMPEG_PATH||'ffmpeg',args,root,j)}catch(e){checkCancel(j);await run(process.env.FFMPEG_PATH||'ffmpeg',['-hide_banner','-loglevel','error','-y','-i',master,'-c:v','libx265','-preset','medium','-crf','17','-x265-params','pools=4:frame-threads=2:log-level=error','-tag:v','hvc1','-pix_fmt','yuv420p','-g','30','-c:a','aac','-b:a','256k','-movflags','+faststart',share],root,j)}
   checkCancel(j);
-  const manifest={project:'After Hours',duration:DURATION,fps:FPS,frames:FRAMES,width:w,height:h,revision:j.revision,snapshot:j.snapshot,sourceFrames:hashes,sourceFramesDirectory:'source-frames',createdAt:new Date().toISOString(),music:JSON.parse(await readFile(join(root,'artifacts/audio/score.json'),'utf8')).version};
+  const manifest={project:'Upside Down',duration:DURATION,fps:FPS,frames:FRAMES,width:w,height:h,revision:j.revision,snapshot:j.snapshot,sourceFrames:hashes,sourceFramesDirectory:'source-frames',createdAt:new Date().toISOString(),music:JSON.parse(await readFile(join(root,'artifacts/audio/score.json'),'utf8')).version};
   await writeFile(join(dir,'manifest.json'),JSON.stringify(manifest,null,2));
   j.stage='verifying decoded video, RGB and PCM';j.progress=.93;await verify(dir,'master.mkv','share.mp4',true,p=>{j.process=p;try{checkCancel(j)}catch(e){p.kill('SIGTERM');throw e}});checkCancel(j);
   // Publication is a commit boundary: cancellation remains available until this
@@ -98,6 +98,7 @@ export function controlPlugin(){
     if(req.method!=='GET'&&req.headers.origin!=='http://'+req.headers.host)throw error(403,'Same-origin request required');
     const url=new URL(req.url,origin),path=url.pathname.slice(6);
     if(req.method==='GET'&&path==='')return reply(res,200,{protocol:1,project:'after-hours',capabilities:['schema','state.read','state.patch','capture','exports','jobs','jobs.cancel','music.score','music.render'],rendererConnected:renderer.ready,duration:DURATION});
+    if(req.method==='GET'&&path==='/diagnostics'){if(!renderer.ready)throw error(503,'Renderer not connected');const r=await renderer.call('Runtime.evaluate',{expression:'window.art.diagnostics()',returnByValue:true});return reply(res,200,r.result?.value??{});}
     if(req.method==='GET'&&path==='/schema')return reply(res,200,{parameters:schema,defaults,profiles});
     if(req.method==='GET'&&path==='/state')return reply(res,200,{revision,state:current(),appliedRevision,frameTime});
     if(req.method==='GET'&&path==='/audio'){

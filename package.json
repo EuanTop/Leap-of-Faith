@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "A Halloween glass observatory held by a curious ghost.",
+  "description": "A suspended Halloween house reflected in still water.",
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 5175 --strictPort",
     "check": "tsc --noEmit",
