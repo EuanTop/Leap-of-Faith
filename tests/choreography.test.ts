@@ -18,11 +18,15 @@ test('each hero apex precedes the architectural reaction, and both exchanges set
  for(let t=0;t<28.8;t+=.03){assert.ok(Math.abs(castleCue(t).q-castleCue(t+28.8).q)<1e-8);assert.ok(Math.abs(pigmentCue(t)-pigmentCue(t+28.8))<1e-8);}
 });
 
-test('the airborne hold slows forward travel while the dive accelerates without reversing',()=>{
+test('cruising stays uniform before takeoff, with slow motion confined to the air',()=>{
  const speed=(t:number)=>1+(exchangeAt(t+.0005).routeOffset-exchangeAt(t-.0005).routeOffset)/.001;
  for(const center of EXCHANGE_CENTERS){
   assert.ok(speed(center-1.10)<.40);assert.ok(speed(center-1.10)>.15);
-  assert.ok(speed(center-.40)>3);
+  const cruise=speed(center-2.0);
+  for(let d=-2.5;d<=-1.66;d+=.02)assert.ok(Math.abs(speed(center+d)-cruise)<1e-6,'pre-jump acceleration');
+  assert.ok(cruise>1&&cruise<1.07);
+  assert.ok(speed(center+.18)<.40);
+  for(let d=-2.5;d<1.6;d+=.01)assert.ok(speed(center+d)<=cruise+1e-6,'an acceleration burst exceeds cruising speed');
   assert.ok(exchangeAt(center-1.30).height>.95&&exchangeAt(center-.95).height>1);
  }
 });

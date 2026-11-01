@@ -24,24 +24,20 @@ test('the two characters have separate wing gestures and a common exchange envel
 });
 
 
-test('the stronger forward impulse recovers gradually without reversing or jumping at the loop',()=>{
+test('the slow-motion route advances without reversing or jumping at the loop',()=>{
  let previous=exchangeAt(0).routeOffset;
  for(let time=.005;time<=28.8;time+=.005){const current=time+exchangeAt(time).routeOffset;assert.ok(current>previous,'forward momentum reverses');previous=current;}
- assert.ok(exchangeAt(12).routeOffset>2.8);
  assert.ok(Math.abs(exchangeAt(0).routeOffset-exchangeAt(28.8).routeOffset)<1e-9);
 });
 
-test('the longer leap braids the two routes without reversing either swimmer at the aerial hold',()=>{
+test('both swimmers keep the common route heading and do not weave across it',()=>{
  for(const center of EXCHANGE_CENTERS){
-  assert.ok(exchangeAt(center).routeOffset>3.5);
-  assert.ok(exchangeAt(center-.45).separation>.9);
-  assert.ok(exchangeAt(center+.7).separation<-.2);
-  const duck=swimPosition(center-.45),swan=swimPosition(center-.45,'swan');
-  assert.ok(duck.position.distanceTo(swan.position)>1.8,'water crossing needs distinct lanes');
   for(let t=center-1.8;t<center+1.6;t+=.01)for(const kind of ['duck','swan'] as const){
    const a=swimPosition(t-.001,kind),b=swimPosition(t+.001,kind),base=duckPose(t);
    const forward=(b.position.x-a.position.x)*Math.sin(base.yaw)+(b.position.z-a.position.z)*Math.cos(base.yaw);
    assert.ok(forward>0,'a curved leap reverses along the shared route');
+   assert.equal(swimPosition(t,kind).yaw,base.yaw);
+   assert.ok(exchangeAt(t).separation>=0);
    assert.ok(swimPosition(t,kind).position.distanceTo(swimPosition(t+28.8,kind).position)<1e-8);
   }
  }
