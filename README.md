@@ -5,7 +5,7 @@
 
 Two suspended worlds meet at the water. A duck and a swan cross between night and daylight; the resident ghosts blink and gently follow the swimmers. By **@EuanTop**.
 
-This is a visual development build. The current scene has not been exported as a finished film.
+Video export produces a high-quality 4K HEVC/AAC MP4 directly, without generating a lossless master.
 
 ### Run
 

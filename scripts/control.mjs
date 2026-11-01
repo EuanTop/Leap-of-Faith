@@ -5,7 +5,7 @@ import {mkdir,readFile,writeFile,rename,rm,stat,statfs,copyFile} from 'node:fs/p
 import {join,resolve} from 'node:path';
 import {once} from 'node:events';
 import {Renderer} from './renderer.mjs';
-import {verify} from './verify.mjs';
+import {verifyShare} from './verify.mjs';
 import {VERSION as MUSIC_VERSION} from './compose.mjs';
 import {exportStamp,pointLatest} from './export-history.mjs';
 
@@ -29,6 +29,10 @@ export function trimJobHistory(jobs,keys,limit=100){
   for(const [key,entry] of keys)if(entry.id===id)keys.delete(key);
  }
  return jobs.size<limit;
+}
+export function shareEncoderArgs(wav,share,hardware=true){
+ const codec=hardware?['-c:v','hevc_videotoolbox','-q:v','80']:['-c:v','libx265','-preset','medium','-crf','17','-x265-params','pools=4:frame-threads=2:log-level=error'];
+ return ['-hide_banner','-loglevel','error','-y','-threads','4','-f','image2pipe','-vcodec','png','-framerate',String(FPS),'-i','pipe:0','-i',wav,'-map','0:v:0','-map','1:a:0','-frames:v',String(FRAMES),...codec,'-tag:v','hvc1','-pix_fmt','yuv420p','-g','30','-c:a','aac','-b:a','256k','-movflags','+faststart','-t',String(DURATION),share];
 }
 export function controlPlugin(){
  let server,root,origin,renderer;
@@ -56,7 +60,7 @@ export function controlPlugin(){
  function publicJob(j){const {process,snapshot,cleanup,...rest}=j;return rest}
  function checkCancel(j){if(j.status==='canceled')throw Error('canceled');if(Date.now()>j.deadline)throw Error('Render exceeded 45 minute deadline')}
  async function task(j,fn){
-  try{j.status='running';await fn();if(!j.published)checkCancel(j);j.status='completed';j.progress=1;j.stage='complete'}catch(e){j.process?.kill('SIGTERM');if(j.status!=='canceled'){j.status='failed';j.error=String(e.message)}if(j.cleanup)for(const p of j.cleanup)await rm(p,{force:true,recursive:true}).catch(()=>{})}finally{active=null;delete j.process;j.updatedAt=new Date().toISOString()}
+  try{j.status='running';await fn();if(!j.published)checkCancel(j);j.status='completed';j.progress=1;j.stage='complete'}catch(e){j.process?.stdin?.destroy();j.process?.kill('SIGKILL');if(j.status!=='canceled'){j.status='failed';j.error=String(e.message)}if(j.cleanup)for(const p of j.cleanup)await rm(p,{force:true,recursive:true}).catch(()=>{})}finally{active=null;delete j.process;j.updatedAt=new Date().toISOString()}
  }
  async function capture(j,b){
   const w=b.width??1440,h=b.height??1920;
@@ -69,35 +73,34 @@ export function controlPlugin(){
   const size=profiles[b.profile||'portrait-4k'];if(!size)throw Error('Unknown export profile');
   const [w,h]=size;const disk=await statfs(join(root,'artifacts'));if(Number(disk.bavail)*Number(disk.bsize)<4*1024**3)throw Error('At least 4 GiB free output storage required');
   const exports=join(root,'artifacts/exports'),dir=join(exports,`.job-${j.jobId}`);await mkdir(dir,{recursive:true});
-  const master=join(dir,'master.mkv'),share=join(dir,'share.mp4');j.cleanup=[dir];
+  const share=join(dir,'share.mp4');j.cleanup=[dir];
   const sourceWav=await audio(),wav=join(dir,'source-audio.wav');await copyFile(sourceWav,wav);checkCancel(j);j.stage='rendering frames';
-  const encoder=spawn(process.env.FFMPEG_PATH||'ffmpeg',['-hide_banner','-loglevel','error','-y','-threads','4','-f','image2pipe','-vcodec','png','-framerate',String(FPS),'-i','pipe:0','-i',wav,'-map','0:v:0','-map','1:a:0','-frames:v',String(FRAMES),'-c:v','ffv1','-level','3','-coder','1','-context','1','-pix_fmt','gbrp','-threads','4','-c:a','pcm_s16le','-t',String(DURATION),master],{stdio:['pipe','ignore','pipe']});
+  let hardware=process.platform==='darwin';
+  if(hardware)try{await run(process.env.FFMPEG_PATH||'ffmpeg',['-hide_banner','-loglevel','error','-f','lavfi','-i',`color=black:s=${w}x${h}:r=30`,'-frames:v','1','-c:v','hevc_videotoolbox','-pix_fmt','yuv420p','-f','null','-'],root,j)}catch{checkCancel(j);hardware=false}
+  const encoder=spawn(process.env.FFMPEG_PATH||'ffmpeg',shareEncoderArgs(wav,share,hardware),{stdio:['pipe','ignore','pipe']});
   j.process=encoder;let encError;encoder.stdin.on('error',e=>encError=e);let log='';encoder.stderr.on('data',b=>log=(log+b).slice(-4000));const done=once(encoder,'close');
   const validation=join(dir,'source-frames');await mkdir(validation,{recursive:true});
   const hashes=[];
   for(let f=0;f<FRAMES;f++){
-   checkCancel(j);if(encError)throw encError;
+   checkCancel(j);if(encError)throw Error('Sharing encoder stopped: '+(log||encError.message));
    const png=await renderer.frame(f/FPS,w,h,{...j.snapshot,aspect:w/h===.75?'3:4':w/h<1?'9:16':'16:9'});
    if([0,216,432,648,863].includes(f)){const name=`source-${f}.png`;await writeFile(join(validation,name),png);hashes.push({frame:f,pngSha256:createHash('sha256').update(png).digest('hex'),name})}
-   if(!encoder.stdin.write(png))await once(encoder.stdin,'drain');j.frame=f+1;j.progress=(f+1)/FRAMES*.8;
+   if(!encoder.stdin.write(png))await Promise.race([once(encoder.stdin,'drain'),done.then(([code])=>{throw Error('Sharing encoder stopped '+code+': '+log)})]);j.frame=f+1;j.progress=(f+1)/FRAMES*.90;
   }
-  encoder.stdin.end();const [code]=await done;if(code!==0)throw Error('FFV1 encoding failed: '+log);checkCancel(j);
-  j.stage='encoding share film';j.progress=.84;
-  const args=['-hide_banner','-loglevel','error','-y','-i',master,'-c:v','hevc_videotoolbox','-q:v','80','-tag:v','hvc1','-pix_fmt','yuv420p','-g','30','-c:a','aac','-b:a','256k','-movflags','+faststart',share];
-  try{await run(process.env.FFMPEG_PATH||'ffmpeg',args,root,j)}catch(e){checkCancel(j);await run(process.env.FFMPEG_PATH||'ffmpeg',['-hide_banner','-loglevel','error','-y','-i',master,'-c:v','libx265','-preset','medium','-crf','17','-x265-params','pools=4:frame-threads=2:log-level=error','-tag:v','hvc1','-pix_fmt','yuv420p','-g','30','-c:a','aac','-b:a','256k','-movflags','+faststart',share],root,j)}
+  encoder.stdin.end();const [code]=await done;if(code!==0)throw Error('Sharing encoding failed: '+log);checkCancel(j);
   checkCancel(j);
   const manifest={project:'Leap of Faith',duration:DURATION,fps:FPS,frames:FRAMES,width:w,height:h,revision:j.revision,snapshot:j.snapshot,sourceFrames:hashes,sourceFramesDirectory:'source-frames',createdAt:new Date().toISOString(),music:JSON.parse(await readFile(join(root,'artifacts/audio/score.json'),'utf8')).version};
   await writeFile(join(dir,'manifest.json'),JSON.stringify(manifest,null,2));
-  j.stage='verifying decoded video, RGB and PCM';j.progress=.93;await verify(dir,'master.mkv','share.mp4',true,p=>{j.process=p;try{checkCancel(j)}catch(e){p.kill('SIGTERM');throw e}});checkCancel(j);
+  j.stage='verifying sharing film';j.progress=.93;await verifyShare(dir,'share.mp4',true,p=>{j.process=p;try{checkCancel(j)}catch(e){p.kill('SIGTERM');throw e}});checkCancel(j);
   // Publication is a commit boundary: cancellation remains available until this
   // point, then is refused while the verified directory is atomically swapped.
   j.committing=true;j.stage='publishing verified files';
   const versionName=`${exportStamp(new Date(j.createdAt))}_${j.jobId.slice(0,8)}`,version=join(exports,versionName);
   await rename(dir,version);j.published=true;j.cleanup=[];
-  j.files=[{path:join(version,'share.mp4'),type:'share'},{path:join(version,'master.mkv'),type:'lossless'}];
+  j.files=[{path:join(version,'share.mp4'),type:'share'}];
   try{await pointLatest(exports,versionName)}catch(e){j.warning='Versioned output retained; latest shortcut could not be updated: '+e.message}
  }
- return {name:'after-hours-control',configureServer(s){
+ return {name:'leap-of-faith-control',configureServer(s){
   server=s;root=server.config.root;origin=`http://127.0.0.1:${server.config.server.port}`;renderer=new Renderer(root,origin);
   server.httpServer?.on('close',()=>renderer.close());
   server.middlewares.use(async(req,res,next)=>{
@@ -106,7 +109,7 @@ export function controlPlugin(){
     if(!['127.0.0.1:'+server.config.server.port,'localhost:'+server.config.server.port].includes(req.headers.host))throw error(403,'Invalid Host');
     if(req.method!=='GET'&&req.headers.origin!=='http://'+req.headers.host)throw error(403,'Same-origin request required');
     const url=new URL(req.url,origin),path=url.pathname.slice(6);
-    if(req.method==='GET'&&path==='')return reply(res,200,{protocol:1,project:'after-hours',capabilities:['schema','state.read','state.patch','capture','exports','jobs','jobs.cancel','music.score','music.render'],rendererConnected:renderer.ready,duration:DURATION});
+    if(req.method==='GET'&&path==='')return reply(res,200,{protocol:1,project:'leap-of-faith',capabilities:['schema','state.read','state.patch','capture','exports','jobs','jobs.cancel','music.score','music.render'],rendererConnected:renderer.ready,duration:DURATION});
     if(req.method==='GET'&&path==='/diagnostics'){if(!renderer.ready)throw error(503,'Renderer not connected');const r=await renderer.call('Runtime.evaluate',{expression:'window.art.diagnostics()',returnByValue:true});return reply(res,200,r.result?.value??{});}
     if(req.method==='GET'&&path==='/schema')return reply(res,200,{parameters:schema,defaults,profiles});
     if(req.method==='GET'&&path==='/state')return reply(res,200,{revision,state:current(),appliedRevision,frameTime});
@@ -116,7 +119,7 @@ export function controlPlugin(){
     if(req.method==='GET'&&path==='/music/version'){await audio();return reply(res,200,{version:MUSIC_VERSION})}
     if(req.method==='GET'&&path==='/music/score'){await audio();return reply(res,200,JSON.parse(await readFile(join(root,'artifacts/audio/score.json'),'utf8')))}
     const match=path.match(/^\/jobs\/([a-zA-Z0-9_-]+)(\/cancel)?$/);
-    if(match){const j=jobs.get(match[1]);if(!j)throw error(404,'Unknown job');if(req.method==='POST'&&match[2]){await body(req);if(j.committing&&!j.published)throw error(409,'Verified output publication is committing; query the task');if(!['completed','failed','canceled'].includes(j.status)&&!j.published){j.status='canceled';j.process?.kill('SIGTERM')}return reply(res,200,publicJob(j))}if(req.method==='GET'&&!match[2])return reply(res,200,publicJob(j))}
+    if(match){const j=jobs.get(match[1]);if(!j)throw error(404,'Unknown job');if(req.method==='POST'&&match[2]){await body(req);if(j.committing&&!j.published)throw error(409,'Verified output publication is committing; query the task');if(!['completed','failed','canceled'].includes(j.status)&&!j.published){j.status='canceled';j.process?.stdin?.destroy();j.process?.kill('SIGKILL')}return reply(res,200,publicJob(j))}if(req.method==='GET'&&!match[2])return reply(res,200,publicJob(j))}
     if(req.method==='PATCH'&&path==='/state'){
      const b=await body(req);if(b.expectedRevision!==revision)throw error(409,'State revision conflict');
      try{validatePatch(b.patch)}catch(e){throw error(400,e.message)}state={...current(),...b.patch};clock=performance.now();revision++;return reply(res,200,{revision,state,appliedRevision,frameTime});

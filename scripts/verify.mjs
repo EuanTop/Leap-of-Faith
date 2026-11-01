@@ -12,6 +12,22 @@ export async function command(binary,args,hash=false,onProcess){
   p.on('close',code=>code===0?resolve(hash?digest.digest('hex'):Buffer.concat(chunks).toString()):reject(Error(binary+' failed: '+error)));
  });
 }
+/** Sharing-film validation does not create or require a lossless intermediate. */
+export async function verifyShare(dir,shareName='share.mp4',save=true,onProcess){
+ const manifest=JSON.parse(await readFile(join(dir,'manifest.json'),'utf8')),path=join(dir,shareName);
+ const metadata=JSON.parse(await command('ffprobe',['-v','error','-show_streams','-show_format','-of','json',path],false,onProcess));
+ const video=metadata.streams.find(s=>s.codec_type==='video'),audio=metadata.streams.find(s=>s.codec_type==='audio');
+ if(video?.width!==manifest.width||video.height!==manifest.height||video.r_frame_rate!==`${manifest.fps}/1`||Math.abs(Number(metadata.format.duration)-manifest.duration)>.08||audio?.channels!==2)throw Error('Sharing-film metadata mismatch');
+ if(video.codec_name!=='hevc'||video.codec_tag_string!=='hvc1'||audio.codec_name!=='aac')throw Error('Expected HEVC/AAC sharing film');
+ const progress=await command('ffmpeg',['-hide_banner','-loglevel','error','-xerror','-threads','4','-i',path,'-map','0:v:0','-map','0:a:0','-progress','pipe:1','-nostats','-f','null','-'],false,onProcess);
+ const counts=[...progress.matchAll(/^frame=(\d+)$/gm)].map(m=>Number(m[1]));
+ if(counts.at(-1)!==manifest.frames)throw Error('Sharing-film frame count mismatch');
+ const report={size:[video.width,video.height],duration:Number(metadata.format.duration),frames:counts.at(-1),codec:video.codec_name,pixelFormat:video.pix_fmt,audioCodec:audio.codec_name,channels:audio.channels,decoders:{software:'full decode passed'}};
+ if(process.platform==='darwin'){
+  await command('ffmpeg',['-hide_banner','-loglevel','error','-xerror','-hwaccel','videotoolbox','-i',path,'-map','0:v:0','-an','-f','null','-'],false,onProcess);report.decoders.hardware='full VideoToolbox decode passed';
+ }
+ if(save)await writeFile(join(dir,'validation.json'),JSON.stringify(report,null,2));return report;
+}
 export async function verify(dir,masterName='master.mkv',shareName='share.mp4',save=true,onProcess){
  const manifest=JSON.parse(await readFile(join(dir,'manifest.json'),'utf8'));
  const root=dirname(dirname(dir));
@@ -50,5 +66,6 @@ export async function verify(dir,masterName='master.mkv',shareName='share.mp4',s
 }
 if(process.argv[1]===fileURLToPath(import.meta.url)){
  const root=dirname(dirname(fileURLToPath(import.meta.url)));const artifacts=await realpath(join(root,'artifacts'));
- console.log(JSON.stringify(await verify(join(artifacts,'exports/latest')),null,2));
+ const dir=join(artifacts,'exports/latest');
+ console.log(JSON.stringify(await verifyShare(dir),null,2));
 }

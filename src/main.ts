@@ -91,7 +91,7 @@ function controlMarkup(){return `<header><p>LEAP OF FAITH</p><button id="close" 
  <label>Volume<input data-key="volume" type="range" min="0" max="1" step="0.01"></label>
  <label>Scene time<input data-key="time" type="range" min="0" max="28.799" step="0.02"></label>
  <div class="actions"><button id="pause">Pause</button><button id="image">Save image</button></div>
- <button class="primary" id="export">Export 4K film + lossless master</button><button id="cancel" hidden>Cancel export</button><p id="status" role="status">28.8 seconds · Seamless loop · Original score</p>`}
+ <button class="primary" id="export">Export 4K MP4</button><button id="cancel" hidden>Cancel export</button><p id="status" role="status">28.8 seconds · Seamless loop · Original score</p>`}
 panel.innerHTML=controlMarkup();
 menu.onclick=()=>panel.hidden=!panel.hidden;document.querySelector<HTMLButtonElement>('#close')!.onclick=()=>panel.hidden=true;
 panel.querySelectorAll<HTMLInputElement|HTMLSelectElement>('[data-key]').forEach(el=>el.onchange=()=>{
