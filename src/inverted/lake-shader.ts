@@ -13,6 +13,8 @@ uniform mat4 inverseProjectionView;
 uniform vec3 cameraWorld;
 ${BACKGROUND_GLSL}
 uniform vec4 wakes[8]; // world x, z, heading, age
+uniform float wakeOpacity[8];
+uniform vec4 contacts[8]; // fixed world x, z, age, strength
 varying vec2 vUv;
 
 vec2 waveSlope(vec2 p, vec2 k, float amplitude, float clock, float bend) {
@@ -49,7 +51,17 @@ void main() {
     float behind = (1. - smoothstep(-.65, .2, dot(delta / r, direction)));
     float front = r - (.14 + wake.w * .42);
     float packet = exp(-front * front * 8.) * exp(-wake.w * .60) * behind;
-    slope += delta / r * sin(front * 17.) * packet * .065 * trail;
+    slope += delta / r * sin(front * 17.) * packet * .065 * trail * wakeOpacity[i];
+  }
+  // Leaving and re-entering the water send a wider ring through the image below.
+  for(int i=0;i<8;i++) {
+    vec4 contact=contacts[i];
+    if(contact.z>.01 && contact.z<3.3) {
+      vec2 delta=p-contact.xy;float r=max(length(delta),.001);
+      float front=r-(.16+contact.z*.88);
+      float envelope=exp(-front*front*5.)*pow(1.-contact.z/3.3,1.5);
+      slope+=delta/r*sin(front*13.)*envelope*.075*contact.w;
+    }
   }
   // Keep the symbolic swan legible while waves travel around it.
   vec2 fromSwimmer = p - swimmer;
