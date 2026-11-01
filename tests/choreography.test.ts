@@ -27,7 +27,7 @@ test('cruising stays uniform before takeoff, with slow motion confined to the ai
   assert.ok(cruise>1&&cruise<1.07);
   assert.ok(speed(center+.18)<.40);
   for(let d=-2.5;d<1.6;d+=.01)assert.ok(speed(center+d)<=cruise+1e-6,'an acceleration burst exceeds cruising speed');
-  assert.ok(exchangeAt(center-1.30).height>.95&&exchangeAt(center-.95).height>1);
+  assert.ok(exchangeAt(center-1.30).height>.84&&exchangeAt(center-.95).height>.90);
  }
 });
 

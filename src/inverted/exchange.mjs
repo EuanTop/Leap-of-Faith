@@ -45,8 +45,8 @@ export function exchangeAt(time){
  const t=wrap(time),index=Math.abs(t-12)<Math.abs(t-26.4)?0:1,d=t-EXCHANGE_CENTERS[index];
  const fromDay=index===1,toDay=!fromDay,progress=smooth((d+1.5)/3),transition=Math.abs(d)<1.7;
  const actorAngle=exchangeAngle(t,0,.90),worldAngle=exchangeAngle(t),daylight=(1-Math.cos(actorAngle))*.5;
- const sign=fromDay?-1:1,height=arc(d),duckHeight=height*sign;
- const pitch=(.82*smooth((d+.82)/.32)*(1-smooth((d-.35)/.95))-.18*pulse(d,-1.65,.80))*sign;
+ const sign=fromDay?-1:1,height=arc(d)*.88,duckHeight=height*sign;
+ const pitch=(.74*smooth((d+.82)/.32)*(1-smooth((d-.35)/.95))-.18*pulse(d,-1.65,.80))*sign;
  const routeOffset=forwardAdvance(t);
  return {time:t,activeDay:daylight>.5,daylight,transition,progress,fromDay,toDay,direction:fromDay?-1:1,height,pitch,
   actorAngle,worldAngle,backgroundAngle:exchangeAngle(t,.24,3.2),duckHeight,swanHeight:-duckHeight,

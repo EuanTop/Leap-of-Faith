@@ -11,7 +11,7 @@ test('two world crossings close at the scene loop and retain their identities',(
  }
 });
 test('each crossing has an airborne jump, full immersion and a smooth emergence',()=>{
- for(const t of EXCHANGE_CENTERS){assert.ok(exchangeAt(t-1.2).height>.9);assert.ok(exchangeAt(t+.15).height< -1.7);assert.ok(Math.abs(exchangeAt(t+1.35).height)<1e-9);
+ for(const t of EXCHANGE_CENTERS){assert.ok(exchangeAt(t-1.2).height>.8);assert.ok(exchangeAt(t+.15).height< -1.5);assert.ok(Math.abs(exchangeAt(t+1.35).height)<1e-9);
   assert.ok(exchangeAt(t-.3).height<0);assert.ok(exchangeAt(t+.5).height<0);assert.ok(exchangeAt(t).transition);
   let previous=exchangeAt(t-2).height;
   for(let u=t-1.999;u<t+1.5;u+=.001){const next=exchangeAt(u).height;assert.ok(Math.abs(next-previous)<.006);previous=next;}
