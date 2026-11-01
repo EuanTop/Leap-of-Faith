@@ -21,7 +21,7 @@ Open `http://127.0.0.1:5175/`. The collapsible panel shares its parameters with 
 ### Implementation
 
 - Parametric hanging towers, recessed archways, curved galleries and pumpkin pendants.
-- A continuous black–violet–gold field follows the spatial turn. A soft, level waterline and cooler surface tint distinguish the lake from the sky.
+- A continuous black–violet–gold field changes direction after the spatial turn, without a separate horizon.
 - Both worlds use permanent 3D geometry. Water-plane clipping separates the upper and lower views; only submerged geometry receives wave distortion. The gallery and three spires have their own motion.
 - Cloth residents retain their simple form, with blinking and gentle head turns. Duck and swan shoulder hinges drive distinct wing gestures; continuous forward arcs carry both through the water.
 - The duck, cloth construction and lighting methods are adapted from the preceding series artwork. The space and score are rebuilt here.
