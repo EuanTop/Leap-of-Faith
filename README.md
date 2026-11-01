@@ -5,6 +5,8 @@
 
 Two suspended worlds meet at the water. A duck and a swan cross between night and daylight; the resident ghosts blink and gently follow the swimmers. By **@EuanTop**.
 
+This branch explores independently moving castle modules and flowing colour exchanges. The full world-turn version is preserved at Git tag `world-flip-v1`.
+
 Video export produces a high-quality 4K HEVC/AAC MP4 directly, without generating a lossless master.
 
 ### Run
@@ -21,7 +23,8 @@ Open `http://127.0.0.1:5175/`. The collapsible panel shares its parameters with 
 ### Implementation
 
 - Parametric hanging towers, recessed archways, curved galleries and pumpkin pendants.
-- A continuous black–violet–gold field changes direction after the spatial turn, without a separate horizon.
+- Black–violet–gold fields flow into one another without rotating the whole background or introducing a hard horizon.
+- Corresponding tower rooms and galleries exchange their positions above and below the water along separate spatial paths. Each module reorients locally, carrying its resident and lantern, without rolling the whole scene.
 - Both worlds use permanent 3D geometry. Water-plane clipping separates the upper and lower views; only submerged geometry receives wave distortion. The gallery and three spires have their own motion.
 - Cloth residents retain their simple form, with blinking and gentle head turns. Duck and swan shoulder hinges drive distinct wing gestures; continuous forward arcs carry both through the water.
 - The duck, cloth construction and lighting methods are adapted from the preceding series artwork. The space and score are rebuilt here.

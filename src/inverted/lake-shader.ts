@@ -85,9 +85,13 @@ void main() {
   float coverage=clamp(sampleColour.a,0.,1.);
   vec3 reflected=sampleColour.rgb/max(coverage,.001);
   vec2 field=(vUv-.5)*vec2(aspect,1.);
-  // Inverse-map the colour field so its visible turn follows the 3D buildings.
-  float fromTop=.5-field.y*cos(backgroundAngle)+field.x*sin(backgroundAngle);
-  vec3 background=artworkBackground(fromTop);
+  // Pigment-like washes exchange the two fields; the sky never rolls like a card.
+  float exchange=.5-.5*cos(backgroundAngle);
+  float flow=.65*sin(field.x*2.4+.7*sin(field.y*3.3+phase)+phase);
+  flow+=.35*sin(field.y*4.1-field.x+phase*2.);
+  float wash=clamp(exchange+.23*sin(exchange*3.14159265)*flow,0.,1.);
+  vec3 dusk=artworkBackground(1.-vUv.y),dawn=artworkBackground(vUv.y);
+  vec3 background=mix(sqrt(dusk),sqrt(dawn),wash);background*=background;
   float reflectance=mix(.72,.95,fresnel);
   vec3 col=mix(background,reflected,coverage*reflectance);
 

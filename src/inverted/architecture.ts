@@ -83,6 +83,8 @@ float hot=exp(-pow(q.x*.8,2.)-pow((q.y-1.5)*.3,2.));vec3 c=mix(vec3(.21,.030,.02
   const smile=new T.Mesh(new T.TorusGeometry(.31,.055,6,20,Math.PI),glow);smile.rotation.z=Math.PI;smile.position.set(0,-.18,.95);pumpkin.add(smile);
   const halo=new T.PointLight('#ff9b32',3,4.8,2);halo.position.y=-1.9;pendant.add(halo);pendants.push({group:pendant,phase:x!*.7});
  }
+ // Lanterns belong to their room modules, so they travel during the exchange.
+ scene.updateMatrixWorld(true);pendants.forEach(({group},i)=>towers[[0,2,1][i]!]!.attach(group));
  spires.forEach(({root})=>batch(root));batch(ring);towers.forEach(g=>batch(g));batch(root);
  return {root,home,ring,towers,spires:spires.map(s=>s.root),update(time:number,motion:number){const phase=time/DURATION*TAU;
   // Broad, looped architectural gestures. Collars remain fixed around each hinge.

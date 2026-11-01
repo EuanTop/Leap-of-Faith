@@ -52,12 +52,39 @@ test('the gallery and three spires move independently, retain lake clearance and
 });
 
 
-test('the actual architectural geometry crosses the water while its ghost and floor clipping remain attached',()=>{
+test('castle modules cross the lake without a global roll, keeping the resident and clipping attached',()=>{
  const scene=new T.Scene(),house=createArchitecture(scene),ghost=createResident(scene),rig=createWorldRig(scene,house,ghost,false);
  const target=new T.Vector3(6,0,28),point=new T.Vector3();
  rig.update(2,target,1);scene.updateMatrixWorld(true);house.home.getWorldPosition(point);assert.ok(point.y>6);
  const beginning=point.clone();
- rig.update(16,target,1);scene.updateMatrixWorld(true);house.home.getWorldPosition(point);assert.ok(point.y< -6);
+ rig.update(16,target,1);scene.updateMatrixWorld(true);house.home.getWorldPosition(point);assert.ok(point.y< -6);assert.ok(point.distanceTo(beginning)>12);
+ for(const {turn} of rig.rigs){assert.equal(turn.rotation.x,0);assert.equal(turn.rotation.z,0);}
+ assert.ok(new Set(rig.rigs.map(r=>r.turn.position.toArray().map(x=>x.toFixed(3)).join(','))).size===5);
  ghost.root.traverse(o=>{if(o instanceof T.Mesh&&o.material instanceof T.MeshPhysicalMaterial){const head=ghost.root.getWorldPosition(new T.Vector3());assert.ok(o.material.clippingPlanes![0]!.distanceToPoint(head)>0);}});
  rig.update(2+28.8,target,1);scene.updateMatrixWorld(true);house.home.getWorldPosition(point);assert.ok(point.distanceTo(beginning)<1e-8);
+});
+
+test('paired castle rooms really exchange positions along separated paths and return at the loop',()=>{
+ const target=new T.Vector3(6,0,28);
+ const make=(day:boolean)=>{const scene=new T.Scene(),house=createArchitecture(scene,day),ghost=createResident(scene),rig=createWorldRig(scene,house,ghost,day);return {scene,house,rig};};
+ const night=make(false),day=make(true);night.rig.pairWith(day.rig);day.rig.pairWith(night.rig);
+ const a=new T.Vector3(),b=new T.Vector3();
+ let first:number[][]=[];
+ for(let i=0;i<=144;i++){
+  const time=i/144*DURATION;
+  for(const world of [night,day]){world.house.update(time,1);world.rig.update(time,target,1);world.scene.updateMatrixWorld(true);}
+  for(let j=1;j<night.rig.rigs.length;j++){
+   night.rig.rigs[j]!.pivot.getWorldPosition(a);day.rig.rigs[j]!.pivot.getWorldPosition(b);
+   assert.ok(a.distanceTo(b)>5,'corresponding modules collide on their exchange paths');
+  }
+  const poses=[night,day].flatMap(world=>world.rig.rigs.map(r=>[...r.turn.position.toArray(),...r.pivot.quaternion.toArray(),...r.pivot.scale.toArray()]));
+  if(i===0)first=poses;
+  if(i===144)poses.forEach((pose,j)=>pose.forEach((value,k)=>assert.ok(Math.abs(value-first[j]![k]!)<1e-8)));
+ }
+ for(const world of [night,day]){
+  world.rig.update(16,target,.95);world.scene.updateMatrixWorld(true);
+  world.rig.rigs.slice(1).forEach(r=>{r.pivot.getWorldPosition(a);assert.ok(a.distanceTo(r.target)<1e-7,'a module did not occupy its counterpart position');});
+  world.house.home.getWorldPosition(a);assert.ok(world===night?a.y< -6:a.y>6,'a room did not cross into the opposite realm');
+  world.rig.update(12,target,0);for(const {turn,pivot} of world.rig.rigs){assert.equal(turn.position.length(),0);assert.equal(Math.abs(pivot.rotation.z),0);}
+ }
 });
