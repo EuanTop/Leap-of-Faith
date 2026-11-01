@@ -10,7 +10,7 @@ export function createLake(scene:T.Scene){
  const pass=new ShaderPass({uniforms:{
   tDiffuse:{value:null},belowWorld:{value:null},phase:{value:0},wind:{value:1},trail:{value:1},
   swimmer:{value:new T.Vector2()},wakes:{value:rippleHistory},wakeOpacity:{value:new Float32Array(8).fill(1)},contacts:{value:contactHistory},viewportHeight:{value:1200},aspect:{value:.75},
-  backgroundAngle:{value:0},inverseProjectionView:{value:new T.Matrix4()},cameraWorld:{value:new T.Vector3()}
+  pigmentAmount:{value:0},inverseProjectionView:{value:new T.Matrix4()},cameraWorld:{value:new T.Vector3()}
  },vertexShader:LAKE_VERTEX,fragmentShader:LAKE_FRAGMENT});
  const wakes:T.Mesh<T.BufferGeometry,T.ShaderMaterial>[]=[];const count=25,segments=36,interval=DURATION/180,life=3.8;
  const mat=new T.ShaderMaterial({clipping:true,transparent:true,depthWrite:false,side:T.DoubleSide,uniforms:{opacity:{value:1}},vertexShader:`
@@ -29,9 +29,9 @@ gl_FragColor=vec4(1.,.73,.43,a*exp(-x*x*3.)*opacity);
   g.setAttribute('alpha',new T.BufferAttribute(alpha,1));g.setAttribute('across',new T.BufferAttribute(across,1));g.setIndex(ids);const m=new T.Mesh(g,mat.clone());m.frustumCulled=false;m.renderOrder=2;wakes.push(m);root.add(m);
  }
  const contacts=Array.from({length:32},()=>{const source=wakes[0]!,g=source.geometry.clone();g.getAttribute('alpha').array.fill(1);const m=new T.Mesh(g,mat.clone());m.frustumCulled=false;m.renderOrder=2;root.add(m);return m;});
- return {root,pass,setView(camera:T.PerspectiveCamera,w:number,h:number,below:T.Texture,backgroundAngle:number){
+ return {root,pass,setView(camera:T.PerspectiveCamera,w:number,h:number,below:T.Texture,pigmentAmount:number){
   pass.uniforms.viewportHeight!.value=h;pass.uniforms.aspect!.value=w/h;pass.uniforms.belowWorld!.value=below;
-  pass.uniforms.backgroundAngle!.value=backgroundAngle;pass.uniforms.inverseProjectionView!.value.copy(camera.projectionMatrix).multiply(camera.matrixWorldInverse).invert();
+  pass.uniforms.pigmentAmount!.value=pigmentAmount;pass.uniforms.inverseProjectionView!.value.copy(camera.projectionMatrix).multiply(camera.matrixWorldInverse).invert();
   pass.uniforms.cameraWorld!.value.copy(camera.position);
  },update(time:number,wind:number,trail:number){const shader=pass.material;shader.uniforms.phase!.value=time/DURATION*TAU;shader.uniforms.wind!.value=wind;shader.uniforms.trail!.value=trail;
   const swimmer=surfaceSample(time).position;shader.uniforms.swimmer!.value.set(swimmer.x,swimmer.z);

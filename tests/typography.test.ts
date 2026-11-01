@@ -15,3 +15,14 @@ test('ink remains contrast-aware when a finishing pass makes a dark raw palette 
  for(let i=0;i<pixels.length;i+=4)pixels.set([84,32,108,255],i);
  assert.equal(regionInk(pixels,48,64,.05,.05,.35,.06),LIGHT_INK);
 });
+
+test('text and its halo interpolate continuously rather than switch at a contrast threshold',async()=>{
+ const {regionInkMix,inkAtBlend}=await import('../src/inverted/typography.ts');
+ const pixels=new Uint8ClampedArray(4*4*4);let previous=0;
+ for(let value=30;value<=250;value++){
+  for(let i=0;i<pixels.length;i+=4)pixels.set([value,value,value,255],i);
+  const mix=regionInkMix(pixels,4,4,0,0,1,1);
+  assert.ok(mix>=previous&&mix-previous<.04);previous=mix;
+ }
+ assert.equal(previous,1);assert.notEqual(inkAtBlend(.5),LIGHT_INK);assert.notEqual(inkAtBlend(.5),DARK_INK);
+});

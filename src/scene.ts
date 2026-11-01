@@ -6,6 +6,7 @@ import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
 import {createWorldRig} from './inverted/world-rig.ts';
 import {createFinishing} from './inverted/finishing.ts';
 import {exchangeAt} from './inverted/exchange.mjs';
+import {pigmentCue,castleCue} from './inverted/choreography.ts';
 import {createLightDesign} from './lighting.ts';
 import {createArchitecture} from './inverted/architecture.ts';
 import {createSwimmer,createResident} from './inverted/actors.ts';
@@ -35,8 +36,8 @@ export async function createArtwork(){
  let width=0,height=0,frameCount=0,frameMs=0;
  function render(time:number,w:number,h:number,state:ArtState){const begin=performance.now(),t=wrap(time);renderer.info.reset();
   if(w!==width||h!==height){renderer.setSize(w,h,false);composer.setSize(w,h);aboveWorld.setSize(w,h);belowWorld.setSize(w,h);width=w;height=h;}
-  const ex=exchangeAt(t);camera.aspect=w/h;camera.fov=state.cameraFov+8+(ex.transition?5*Math.sin(Math.PI*ex.progress):0);const angle=(12+(state.cameraTilt-40)*.35)*Math.PI/180;
-  const focus=new T.Vector3(0,2.8,0),distance=48*Math.max(1,.75/(w/h))*(1+(ex.transition?.18*Math.sin(Math.PI*ex.progress):0));camera.position.set(Math.sin(angle)*distance,2.8,Math.cos(angle)*distance);camera.lookAt(focus);camera.updateProjectionMatrix();camera.updateMatrixWorld();
+  const ex=exchangeAt(t),castle=castleCue(t,.10),wide=castle.active?Math.sin(Math.PI*castle.u):0;camera.aspect=w/h;camera.fov=state.cameraFov+8+5*wide-2.4*ex.heroFocus;const angle=(12+(state.cameraTilt-40)*.35)*Math.PI/180;
+  const focus=new T.Vector3(0,2.8,0),distance=48*Math.max(1,.75/(w/h))*(1+.18*wide-.035*ex.heroFocus);camera.position.set(Math.sin(angle)*distance,2.8,Math.cos(angle)*distance);camera.lookAt(focus);camera.updateProjectionMatrix();camera.updateMatrixWorld();
   lighting.update(t);house.update(t,state.motion);duck.update(t,state.motion);ghost.update(t,duck.root.position,state.motion);lake.update(t,state.river,state.trail);mirror.update(t,state.motion);mirror.scene.updateMatrixWorld(true);
   nightRig.update(t,duck.root.position,state.motion);dayRig.update(t,mirror.swan.position,state.motion);
   scene.updateMatrixWorld(true);mirror.scene.updateMatrixWorld(true);
@@ -47,7 +48,7 @@ export async function createArtwork(){
     renderer.shadowMap.needsUpdate=target===aboveWorld;renderer.render(scene,camera);renderer.render(mirror.scene,camera);
    }
   }finally{renderer.clippingPlanes=[];renderer.autoClear=autoClear;renderer.setClearColor(clear,alpha);renderer.setRenderTarget(null);}
-  lake.setView(camera,w,h,belowWorld.texture,ex.backgroundAngle);finishing.update(state.postStyle??'etching',state.postStrength??.45,w,h);composer.render(0);frameCount++;frameMs=performance.now()-begin;if(errors.length)throw Error('Shader compilation: '+errors.join('\n'));
+  lake.setView(camera,w,h,belowWorld.texture,pigmentCue(t));finishing.update(state.postStyle??'etching',state.postStrength??.45,w,h);composer.render(0);frameCount++;frameMs=performance.now()-begin;if(errors.length)throw Error('Shader compilation: '+errors.join('\n'));
   return {canvas:renderer.domElement,story:{t,daylight:ex.daylight,backgroundAngle:ex.backgroundAngle},renderer};
  }
  function dispose(){const geos=new Set<T.BufferGeometry>(),mats=new Set<T.Material>();[scene,mirror.scene].forEach(s=>s.traverse(o=>{if(o instanceof T.Mesh){geos.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:[o.material])mats.add(m);if(o.customDepthMaterial)mats.add(o.customDepthMaterial);}if(o instanceof T.DirectionalLight||o instanceof T.SpotLight||o instanceof T.PointLight)o.shadow.dispose();}));geos.forEach(g=>g.dispose());mats.forEach(m=>m.dispose());finishing.pass.dispose();lake.pass.dispose();env.dispose();bloom.dispose();output.dispose();texturePass.dispose();aboveWorld.dispose();belowWorld.dispose();composer.dispose();renderer.dispose();}

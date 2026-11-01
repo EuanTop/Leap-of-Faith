@@ -1,15 +1,16 @@
 import * as T from 'three';
-import {exchangeAngle} from './exchange.mjs';
+import {castleCue,alarmAt} from './choreography.ts';
+import {GHOST_HOME} from './architecture.ts';
 import type {createArchitecture} from './architecture.ts';
 import type {createResident} from './actors.ts';
 // Corresponding rooms exchange their actual centres. Separate depth corridors
 // let the two castles pass one another without intersecting at the water.
 const PATHS=[
  {x:0,z:0,yaw:0,delay:0,swap:false}, // shared supporting crown
- {x:0,z:11,yaw:.10,delay:-.30,swap:true},
- {x:-4.5,z:4.6,yaw:-.10,delay:-.16,swap:true},
- {x:4.0,z:4.6,yaw:.10,delay:.18,swap:true},
- {x:0,z:-5.2,yaw:-.08,delay:.38,swap:true},
+ {x:0,z:11,yaw:.10,delay:.07,swap:true},
+ {x:-4.5,z:4.6,yaw:-.10,delay:0,swap:true},
+ {x:4.0,z:4.6,yaw:.10,delay:.13,swap:true},
+ {x:0,z:-5.2,yaw:-.08,delay:.24,swap:true},
 ];
 /** A module turns about its own centre while translating to its counterpart. */
 export function createWorldRig(scene:T.Scene,house:ReturnType<typeof createArchitecture>,ghost:ReturnType<typeof createResident>,day:boolean){
@@ -35,26 +36,33 @@ export function createWorldRig(scene:T.Scene,house:ReturnType<typeof createArchi
  if(!ghostBase)throw Error('The resident requires the central tower transform');
  const clips:{plane:T.Plane;rest:T.Plane}[]=[];
  ghost.root.traverse(o=>{if(!(o instanceof T.Mesh))return;for(const mat of [o.material,o.customDepthMaterial].flat())if(mat?.clippingPlanes)for(const plane of mat.clippingPlanes)clips.push({plane,rest:plane.clone()});});
- const inverse=new T.Matrix4();
+ const inverse=new T.Matrix4(),previousMatrix=new T.Matrix4(),lag=new T.Vector3(),ahead=new T.Vector3();
+ const homeRig=rigs.find(r=>r.node===house.home)!;
+ function pose(r:typeof rigs[number],time:number,motion:number){
+  const {turn,pivot,base,path,start,target:destination}=r,amount=Math.min(1.35,Math.max(0,motion)),side=day?-1:1;
+  const cue=castleCue(time,path.delay+(day?.08:0)),q=path.swap&&motion>0?cue.q:0,arc=Math.sin(Math.PI*q),index=rigs.indexOf(r),sway=Math.sin(Math.PI*2*cue.u+index*.83);
+  turn.position.copy(destination).sub(start).multiplyScalar(q);
+  turn.position.x+=path.x*arc*(1+.07*sway)+.22*arc*sway;
+  turn.position.z+=side*path.z*arc*(1+.065*Math.sin(Math.PI*2*cue.u+index));
+  turn.position.y+=.35*arc*sway;
+  pivot.rotation.set(.035*arc*sway*amount,side*path.yaw*arc*(.7+.3*sway)*amount,Math.PI*q+.045*arc*sway);
+  pivot.scale.setScalar(1-(path===PATHS[1] ? .14 : 0)*arc);
+  base.updateWorldMatrix(true,true);return cue;
+ }
  return {rigs,pairWith(other:{rigs:{start:T.Vector3}[]}){
   if(other.rigs.length!==rigs.length)throw Error('Castle module pairs do not match');
   rigs.forEach((r,i)=>r.target.copy(other.rigs[i]!.start));
  },update(time:number,target:T.Vector3,motion:number){
-  const amount=Math.min(1.35,Math.max(0,motion)),side=day?-1:1;
-  rigs.forEach(({turn,pivot,base,path,start,target:destination})=>{
-   const q=path.swap&&motion>0?(1-Math.cos(exchangeAngle(time,path.delay+(day?.18:0),3.2)))*.5:0;
-   const arc=Math.sin(Math.PI*q);
-   turn.position.copy(destination).sub(start).multiplyScalar(q);
-   turn.position.x+=path.x*arc;
-   turn.position.z+=side*path.z*arc;
-   // Local reorientation keeps windows and residents upright in the arrival realm;
-   // no group rotates around the centre of the whole composition.
-   pivot.rotation.set(0,side*path.yaw*arc*amount,Math.PI*q);
-   pivot.scale.setScalar(1-(path===PATHS[1] ? .18 : 0)*arc);
-   base.updateWorldMatrix(true,true);
-  });
-  ghostBase!.updateWorldMatrix(true,false);
-  inverse.copy(ghostBase!.matrixWorld).invert();ghost.update(time,target.clone().applyMatrix4(inverse),motion);
+  rigs.forEach(r=>pose(r,time,motion));
+  // Sample the earlier room pose rather than integrating mutable follower state.
+  // This keeps its small reaction delay repeatable while scrubbing and exporting.
+  pose(homeRig,time-.16,motion);previousMatrix.copy(ghostBase!.matrixWorld);
+  const cue=pose(homeRig,time,motion);inverse.copy(ghostBase!.matrixWorld).invert();
+  lag.copy(GHOST_HOME).applyMatrix4(previousMatrix).applyMatrix4(inverse).sub(GHOST_HOME).clampLength(0,.65);
+  const panic=cue.active?alarmAt(cue.u)*Math.min(1,motion):0;
+  ahead.copy(GHOST_HOME).addScaledVector(lag,-5);ahead.z+=8;ahead.y+=2;
+  const look=target.clone().applyMatrix4(inverse).lerp(ahead,panic*.8);
+  ghost.update(time,look,motion,{reach:0,lean:-lag.x*.14,stretch:panic*.22,squint:0,lag,panic});
   clips.forEach(({plane,rest})=>plane.copy(rest).applyMatrix4(ghostBase!.matrixWorld));
  }};
 }

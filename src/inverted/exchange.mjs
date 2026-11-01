@@ -7,7 +7,7 @@ export function exchangeAngle(time,delay=0,width=3.0){
  const t=wrap(time);return Math.PI*EXCHANGE_CENTERS.reduce((n,c)=>n+smooth((t-c-delay+width/2)/width),0);
 }
 function arc(d){
- const keys=[[-1.65,0,0],[-1.2,.95,0],[-.45,0,-2.0],[.15,-1.80,0],[1.35,0,0]];
+ const keys=[[-1.65,0,0],[-1.30,.98,.15],[-.95,1.04,0],[-.73,.94,-.9],[-.45,0,-3.8],[.18,-1.85,0],[.48,-1.76,.65],[1.35,0,0]];
  for(let i=0;i<keys.length-1;i++){
   const [a,p,m]=keys[i],[b,q,n]=keys[i+1];if(d<a||d>b)continue;
   const u=(d-a)/(b-a),u2=u*u,u3=u2*u;
@@ -18,8 +18,10 @@ function forwardAdvance(time){
  const t=wrap(time);
  return EXCHANGE_CENTERS.reduce((total,center)=>{
   const d=((t-center+DURATION*1.5)%DURATION)-DURATION*.5;
-  const rise=smooth((d+2.0)/2.15),recover=1-smooth((d-1.0)/6.0);
-  return total+3.0*rise*recover;
+  const launch=2.0*smooth((d+1.95)/.60),hang=.25*smooth((d+1.35)/.50);
+  const dive=1.5*smooth((d+.80)/.80),emerge=.15*smooth((d-.05)/.50);
+  const recover=1-smooth((d-1.0)/6.0);
+  return total+(launch-hang+dive-emerge)*recover;
  },0);
 }
 /** Positions never reset: the two permanent characters cross the actual water plane. */
@@ -28,10 +30,11 @@ export function exchangeAt(time){
  const fromDay=index===1,toDay=!fromDay,progress=smooth((d+1.5)/3),transition=Math.abs(d)<1.7;
  const actorAngle=exchangeAngle(t,0,.90),worldAngle=exchangeAngle(t),daylight=(1-Math.cos(actorAngle))*.5;
  const sign=fromDay?-1:1,height=arc(d),duckHeight=height*sign;
- const pitch=(.68*smooth((d+1.15)/.6)*(1-smooth((d-.25)/.9))-.12*pulse(d,-1.65,.75))*sign;
+ const pitch=(.82*smooth((d+.82)/.32)*(1-smooth((d-.35)/.95))-.18*pulse(d,-1.65,.80))*sign;
  return {time:t,activeDay:daylight>.5,daylight,transition,progress,fromDay,toDay,direction:fromDay?-1:1,height,pitch,
   actorAngle,worldAngle,backgroundAngle:exchangeAngle(t,.24,3.2),duckHeight,swanHeight:-duckHeight,
   routeOffset:forwardAdvance(t),separation:.50*pulse(d,-1.8,3.4),
+  heroFocus:Math.max(pulse(d,-1.5,.80),pulse(d,-.05,.75)),
   duckFlap:Math.max(pulse(d,.10,.9),pulse(d,-2.10,1.0),pulse(t,3.0,.85),pulse(t,17.4,.85)),
   swanFlap:Math.max(pulse(d,.12,1.0),pulse(d,-1.96,1.08),pulse(t,4.0,1.05),pulse(t,18.4,1.05)),
   flapClock:t*TAU,submerged:Math.abs(d)<.35};

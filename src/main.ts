@@ -1,7 +1,7 @@
 import './style.css';
 import {createArtwork} from './scene.ts';
 import {LoopAudio} from './loop-audio.ts';
-import {regionInk,DARK_INK} from './inverted/typography.ts';
+import {regionInk,regionInkMix,inkAtBlend} from './inverted/typography.ts';
 import {DEFAULTS,DURATION,wrap,FRAME_FORMATS,type ArtState} from './story.ts';
 
 const artwork=await createArtwork();
@@ -27,8 +27,9 @@ function draw(t:number,w:number,h:number,s:ArtState){
  inkContext.drawImage(output.canvas,0,0,48,64);const background=inkContext.getImageData(0,0,48,64).data;
  const ink=(x:number,y:number,width:number,height:number)=>regionInk(background,48,64,x,y,width,height);
  ctx.textBaseline='top';ctx.font=`${w*.052}px Artwork, Georgia, serif`;
- const titleInk=ink(.066,.046,ctx.measureText('Leap of Faith').width/w,w*.052/h);ctx.fillStyle=titleInk;
- ctx.shadowColor=titleInk===DARK_INK?'rgba(255,246,212,.70)':'rgba(59,30,78,.50)';ctx.shadowBlur=Math.max(1,w*.0018);
+ const titleWidth=ctx.measureText('Leap of Faith').width/w,titleMix=regionInkMix(background,48,64,.066,.046,titleWidth,w*.052/h);
+ ctx.fillStyle=inkAtBlend(titleMix);
+ ctx.shadowColor=inkAtBlend(1-titleMix,.60);ctx.shadowBlur=Math.max(1,w*.0018);
  ctx.fillText('Leap of Faith',margin,h*.046);
  ctx.shadowBlur=0;ctx.shadowColor='transparent';
  ctx.font=`500 ${w*.013}px Inter, Helvetica, sans-serif`;ctx.letterSpacing=`${w*.0024}px`;

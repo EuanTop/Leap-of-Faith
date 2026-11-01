@@ -1,4 +1,5 @@
 import {BACKGROUND_GLSL} from './background.ts';
+import {PIGMENT_GLSL} from './pigment.ts';
 // The reflection is rendered from the scene; wave slopes bend its projective lookup.
 // All temporal frequencies are integers of the artwork loop, including the wakes.
 export const LAKE_VERTEX = `varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`;
@@ -8,10 +9,11 @@ uniform sampler2D tDiffuse,belowWorld;
 uniform float phase, wind, trail;
 uniform vec3 color;
 uniform vec2 swimmer;
-uniform float viewportHeight,aspect,backgroundAngle;
+uniform float viewportHeight,aspect,pigmentAmount;
 uniform mat4 inverseProjectionView;
 uniform vec3 cameraWorld;
 ${BACKGROUND_GLSL}
+${PIGMENT_GLSL}
 uniform vec4 wakes[8]; // world x, z, heading, age
 uniform float wakeOpacity[8];
 uniform vec4 contacts[8]; // fixed world x, z, age, strength
@@ -84,14 +86,8 @@ void main() {
   sampleColour += texture2D(belowWorld, reflectedUV - spread) * .17;
   float coverage=clamp(sampleColour.a,0.,1.);
   vec3 reflected=sampleColour.rgb/max(coverage,.001);
-  vec2 field=(vUv-.5)*vec2(aspect,1.);
-  // Pigment-like washes exchange the two fields; the sky never rolls like a card.
-  float exchange=.5-.5*cos(backgroundAngle);
-  float flow=.65*sin(field.x*2.4+.7*sin(field.y*3.3+phase)+phase);
-  flow+=.35*sin(field.y*4.1-field.x+phase*2.);
-  float wash=clamp(exchange+.23*sin(exchange*3.14159265)*flow,0.,1.);
-  vec3 dusk=artworkBackground(1.-vUv.y),dawn=artworkBackground(vUv.y);
-  vec3 background=mix(sqrt(dusk),sqrt(dawn),wash);background*=background;
+  vec2 material= pigmentSource(vUv*2.-1.,pigmentAmount);
+  vec3 background=artworkBackground(.5-.5*material.y);
   float reflectance=mix(.72,.95,fresnel);
   vec3 col=mix(background,reflected,coverage*reflectance);
 

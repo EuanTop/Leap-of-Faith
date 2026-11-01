@@ -5,6 +5,7 @@ import {ghostGeometry,warpGhost,GHOST_WARP_GLSL} from '../ghost-model.ts';
 import {DURATION,TAU,wrap} from '../story.ts';
 import {GHOST_HOME} from './architecture.ts';
 import {exchangeAt} from './exchange.mjs';
+type ResidentReaction={reach:number;lean:number;stretch:number;squint:number;lag?:T.Vector3;panic?:number};
 
 export function duckPose(time:number){const phase=wrap(time+exchangeAt(time).routeOffset)/DURATION*TAU;return {phase,position:new T.Vector3(6.0+4.0*Math.sin(phase),-.175,28.0+2.6*Math.cos(phase)),yaw:Math.atan2(4.0*Math.cos(phase),-2.6*Math.sin(phase))};}
 export function swimPosition(time:number,kind:'duck'|'swan'='duck'){
@@ -37,15 +38,18 @@ export function createResident(scene:T.Scene){
   const eye=new T.Mesh(new T.SphereGeometry(1,28,20),new T.MeshBasicMaterial({color:'#25152f'}));eye.scale.set(.54,.72,.13);bodyRig.add(eye);
   const x=sign*1.30,y=-.20,z=4.2*Math.sqrt(1-(x/6)**2-((y+4)/6)**2);return {eye,rest:new T.Vector3(x,y,z)};
  });
- return {root,update(time:number,duck:T.Vector3,motion:number,reaction={reach:0,lean:0,stretch:0,squint:0}){const phase=wrap(time)/DURATION*TAU;
+ return {root,update(time:number,duck:T.Vector3,motion:number,reaction:ResidentReaction={reach:0,lean:0,stretch:0,squint:0}){const phase=wrap(time)/DURATION*TAU,panic=reaction.panic??0;
+  root.userData.panic=panic;root.userData.followLag=reaction.lag?.length()??0;
   root.position.copy(GHOST_HOME);root.position.y+=(.09*Math.sin(phase*2)+.28*reaction.reach)*motion;
+  if(reaction.lag)root.position.add(reaction.lag);
+  root.position.y+=panic*.12*Math.sin(phase*24)**2;
   root.position.z+=.30*reaction.reach*motion;
   root.rotation.z=(.045*Math.sin(phase*2)+reaction.lean)*motion;
   root.scale.set(.23*(1-.05*reaction.stretch),.23*(1+.15*reaction.stretch),.23);
-  bodyRig.rotation.x=(.10*reaction.reach+.025*Math.sin(phase*3))*motion;
-  bodyRig.rotation.z=.05*Math.sin(phase*2+.8)*motion;
+  bodyRig.rotation.x=(.10*reaction.reach+.025*Math.sin(phase*3))*motion+panic*.10;
+  bodyRig.rotation.z=.05*Math.sin(phase*2+.8)*motion+panic*.10*Math.sin(phase*19);
   const aim=duck.clone().sub(root.position);uniforms.uHeadYaw.value=T.MathUtils.clamp(Math.atan2(aim.x,Math.max(3,aim.z)),-.42,.42)*motion;uniforms.uHeadPitch.value=.18+(.075*Math.sin(phase*2)+.14*reaction.reach)*motion;uniforms.uPhase.value=phase;uniforms.uMotion.value=motion;
-  const blink=1-.88*Math.pow(Math.max(0,Math.cos(phase*3+.5)),28)*Math.min(motion,1);
-  eyes.forEach(({eye,rest})=>{const point=warpGhost(rest,phase,motion,uniforms.uHeadPitch.value,uniforms.uHeadYaw.value,shifts);eye.position.copy(point);eye.position.z+=.28;eye.rotation.set(.18,uniforms.uHeadYaw.value,0);eye.scale.y=.72*blink*(1+.20*reaction.reach-.24*reaction.squint);});
+  const blink=1-.88*Math.pow(Math.max(0,Math.cos(phase*3+.5)),28)*Math.min(motion,1)*(1-.8*panic);
+  eyes.forEach(({eye,rest})=>{const point=warpGhost(rest,phase,motion,uniforms.uHeadPitch.value,uniforms.uHeadYaw.value,shifts);eye.position.copy(point);eye.position.z+=.28;eye.rotation.set(.18,uniforms.uHeadYaw.value,0);eye.scale.y=.72*blink*(1+.20*reaction.reach-.24*reaction.squint+.25*panic);});
  }};
 }
