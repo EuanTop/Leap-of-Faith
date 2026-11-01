@@ -21,6 +21,15 @@ export function validatePatch(patch){
 }
 export const profiles={'portrait-4k':[2880,3840],'portrait-hd':[1440,1920],'story-4k':[2160,3840],'landscape-4k':[3840,2160]};
 const stable=o=>JSON.stringify(o,Object.keys(o).sort());
+export function trimJobHistory(jobs,keys,limit=100){
+ for(const [id,job] of jobs){
+  if(jobs.size<limit)break;
+  if(!['completed','failed','canceled'].includes(job.status))continue;
+  jobs.delete(id);
+  for(const [key,entry] of keys)if(entry.id===id)keys.delete(key);
+ }
+ return jobs.size<limit;
+}
 export function controlPlugin(){
  let server,root,origin,renderer;
  let state={...defaults},revision=0,appliedRevision=-1,frameTime=0,clock=performance.now();
@@ -118,7 +127,7 @@ export function controlPlugin(){
      const signature=path+stable(b),prior=keys.get(key);
      if(prior){if(prior.signature!==signature)throw error(409,'Idempotency key has another payload');return reply(res,200,publicJob(jobs.get(prior.id)))}
      if(b.revision!==revision)throw error(409,'State revision conflict');if(active)throw error(409,'Another render task is active');
-     if(jobs.size>=100)throw error(429,'Session task limit reached; restart the local service');
+     if(!trimJobHistory(jobs,keys))throw error(429,'Too many unfinished tasks');
      if(path==='/music/render'){
       if(b.range!==undefined||b.mix!==undefined)throw error(400,'This project renders the full mix only; omit range and mix');
       await audio();const score=JSON.parse(await readFile(join(root,'artifacts/audio/score.json'),'utf8'));if(b.version!==undefined&&b.version!==score.version)throw error(409,'Score version conflict');
