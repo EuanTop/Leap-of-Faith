@@ -76,8 +76,21 @@ void main() {
   // Inverse-map the colour field so its visible turn follows the 3D buildings.
   float fromTop=backgroundAreaCoordinate(field,backgroundAngle,aspect);
   vec3 background=artworkBackground(fromTop);
+  // The water plane stays level while the worlds turn. Its own cooler tint and
+  // distant grazing reflection give the continuous colour field a readable surface.
+  float waterMask=1.-smoothstep(-.0015,.0015,ray.y);
+  vec3 waterBody=background*vec3(.84,.88,.96)+vec3(.008,.006,.015);
+  vec3 fieldColour=mix(background,waterBody,waterMask);
+  float haze=exp(-pow(ray.y/.016,2.));
+  vec3 horizonLight=mix(vec3(.38,.24,.43),vec3(.88,.72,.42),.5+.5*cos(backgroundAngle));
+  fieldColour=mix(fieldColour,horizonLight,haze*.14);
+  float rim=exp(-pow(ray.y/.0024,2.));
+  float underRim=exp(-pow((ray.y+.004)/.003,2.));
+  vec3 rimColour=mix(vec3(.10,.035,.18),vec3(.88,.72,.42),.5+.5*cos(backgroundAngle));
+  fieldColour=mix(fieldColour,rimColour,rim*.30);
+  fieldColour*=1.-underRim*.12;
   float reflectance=mix(.72,.95,fresnel);
-  vec3 col=mix(background,reflected,coverage*reflectance);
+  vec3 col=mix(fieldColour,reflected,coverage*reflectance);
 
   // Sparse, broken lilac wave crests pick up the same local reflected illumination.
   float crest = pow(max(0., sin(dot(p, vec2(.24, 1.91)) + phase * 7.
