@@ -26,6 +26,20 @@ function forwardAdvance(time){
  }
  return offset;
 }
+const gentle=x=>{const u=Math.max(0,Math.min(1,x));return u*u*u*(10+u*(-15+6*u));};
+function flightTravel(time){
+ const t=wrap(time),clock=t+forwardAdvance(t);
+ return EXCHANGE_CENTERS.reduce((distance,center)=>{
+  const d=((t-center+DURATION*1.5)%DURATION)-DURATION*.5;
+  const start=center-1.65,end=center+1.35;
+  const startClock=start+forwardAdvance(start),endClock=end+forwardAdvance(end);
+  // Extend the same forward arc in space. Its progress uses the existing
+  // slow-motion clock, so the apex remains slow and takeoff has no impulse.
+  const localClock=clock+(center+d-t);
+  const progress=gentle((localClock-startClock)/(endClock-startClock));
+  return distance+2.5*progress*(1-gentle((d-1.35)/8));
+ },0);
+}
 /** Positions never reset: the two permanent characters cross the actual water plane. */
 export function exchangeAt(time){
  const t=wrap(time),index=Math.abs(t-12)<Math.abs(t-26.4)?0:1,d=t-EXCHANGE_CENTERS[index];
@@ -36,7 +50,7 @@ export function exchangeAt(time){
  const routeOffset=forwardAdvance(t);
  return {time:t,activeDay:daylight>.5,daylight,transition,progress,fromDay,toDay,direction:fromDay?-1:1,height,pitch,
   actorAngle,worldAngle,backgroundAngle:exchangeAngle(t,.24,3.2),duckHeight,swanHeight:-duckHeight,
-  routeOffset,separation:.50*pulse(d,-1.8,3.4),
+  routeOffset,flightTravel:flightTravel(t),separation:.50*pulse(d,-1.8,3.4),
   heroFocus:Math.max(pulse(d,-1.5,.80),pulse(d,-.05,.75)),
   duckFlap:Math.max(pulse(d,.10,.9),pulse(d,-2.10,1.0),pulse(t,3.0,.85),pulse(t,17.4,.85)),
   swanFlap:Math.max(pulse(d,.12,1.0),pulse(d,-1.96,1.08),pulse(t,4.0,1.05),pulse(t,18.4,1.05)),

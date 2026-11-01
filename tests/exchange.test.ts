@@ -6,7 +6,7 @@ import {duckPose,swimPosition} from '../src/inverted/actors.ts';
 test('two world crossings close at the scene loop and retain their identities',()=>{
  assert.equal(exchangeAt(2).activeDay,false);assert.equal(exchangeAt(16).activeDay,true);assert.equal(exchangeAt(28).activeDay,false);
  for(let t=0;t<28.8;t+=.013){const a=exchangeAt(t),b=exchangeAt(t+28.8);
-  for(const key of ['daylight','height','pitch','duckFlap','swanFlap'] as const)assert.ok(Math.abs(a[key]-b[key])<1e-8);
+  for(const key of ['daylight','height','pitch','flightTravel','duckFlap','swanFlap'] as const)assert.ok(Math.abs(a[key]-b[key])<1e-8);
   assert.equal(a.activeDay,b.activeDay);assert.ok(a.daylight>=0&&a.daylight<=1);
  }
 });
@@ -40,5 +40,20 @@ test('both swimmers keep the common route heading and do not weave across it',()
    assert.ok(exchangeAt(t).separation>=0);
    assert.ok(swimPosition(t,kind).position.distanceTo(swimPosition(t+28.8,kind).position)<1e-8);
   }
+ }
+});
+
+test('leaps travel forward through broad arcs without a pre-takeoff impulse',()=>{
+ for(const center of EXCHANGE_CENTERS){
+  const takeoff=duckPose(center-1.65),entry=duckPose(center-.45),landing=duckPose(center+1.35);
+  assert.ok(takeoff.position.distanceTo(entry.position)>1.3);
+  assert.ok(entry.position.distanceTo(landing.position)>2.8);
+  assert.equal(exchangeAt(center-1.66).flightTravel,0);
+  assert.ok(exchangeAt(center-1.64).flightTravel<.0001);
+ }
+ for(let t=0;t<28.8;t+=.01){
+  const a=duckPose(t-.001),b=duckPose(t+.001),p=duckPose(t);
+  const advance=(b.position.x-a.position.x)*Math.sin(p.yaw)+(b.position.z-a.position.z)*Math.cos(p.yaw);
+  assert.ok(advance>0,'the longer arc or its recovery reverses a swimmer');
  }
 });

@@ -7,7 +7,8 @@ import {GHOST_HOME} from './architecture.ts';
 import {exchangeAt} from './exchange.mjs';
 type ResidentReaction={reach:number;lean:number;stretch:number;squint:number;lag?:T.Vector3;panic?:number};
 
-export function duckPose(time:number){const phase=wrap(time+exchangeAt(time).routeOffset)/DURATION*TAU;return {phase,position:new T.Vector3(6.0+4.0*Math.sin(phase),-.175,28.0+2.6*Math.cos(phase)),yaw:Math.atan2(4.0*Math.cos(phase),-2.6*Math.sin(phase))};}
+export function duckPose(time:number){const ex=exchangeAt(time),phase=wrap(time+ex.routeOffset)/DURATION*TAU,yaw=Math.atan2(4.0*Math.cos(phase),-2.6*Math.sin(phase));
+ return {phase,position:new T.Vector3(6.0+4.0*Math.sin(phase)+Math.sin(yaw)*ex.flightTravel,-.175,28.0+2.6*Math.cos(phase)+Math.cos(yaw)*ex.flightTravel),yaw};}
 export function swimPosition(time:number,kind:'duck'|'swan'='duck'){
  const p=duckPose(time),separation=exchangeAt(time).separation*(kind==='duck'?1:-1);
  p.position.x+=Math.cos(p.yaw)*separation;p.position.z-=Math.sin(p.yaw)*separation;return p;
