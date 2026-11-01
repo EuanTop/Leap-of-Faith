@@ -1,4 +1,4 @@
-<h1 align="center">Upside Down</h1>
+<h1 align="center">Leap of Faith</h1>
 <p align="center">All Hallows’ Eve.</p>
 <p align="center"><strong>English</strong> · <a href="README.zh-CN.md">简体中文</a></p>
 <p align="center"><img src="docs/preview.webp" width="420" alt="A suspended house, a ghost at its doorway, and a duck on reflecting water"></p>

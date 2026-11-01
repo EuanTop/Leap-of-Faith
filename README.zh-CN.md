@@ -1,4 +1,4 @@
-<h1 align="center">倒悬鬼屋 · Upside Down</h1>
+<h1 align="center">信仰之跃 · Leap of Faith</h1>
 <p align="center">All Hallows’ Eve.</p>
 <p align="center"><a href="README.md">English</a> · <strong>简体中文</strong></p>
 <p align="center"><img src="docs/preview.webp" width="420" alt="倒悬建筑、门洞中的幽灵和水面上的小黄鸭"></p>

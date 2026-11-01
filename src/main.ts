@@ -27,8 +27,8 @@ function draw(t:number,w:number,h:number,s:ArtState){
  inkContext.drawImage(output.canvas,0,0,48,64);const background=inkContext.getImageData(0,0,48,64).data;
  const ink=(x:number,y:number,width:number,height:number)=>regionInk(background,48,64,x,y,width,height);
  ctx.textBaseline='top';ctx.font=`${w*.052}px Artwork, Georgia, serif`;
- ctx.fillStyle=ink(.066,.046,ctx.measureText('Upside Down').width/w,w*.052/h);
- ctx.fillText('Upside Down',margin,h*.046);
+ ctx.fillStyle=ink(.066,.046,ctx.measureText('Leap of Faith').width/w,w*.052/h);
+ ctx.fillText('Leap of Faith',margin,h*.046);
  ctx.font=`500 ${w*.013}px Inter, Helvetica, sans-serif`;ctx.letterSpacing=`${w*.0024}px`;
  const subtitleY=h*.046+w*.058;
  ctx.fillStyle=ink(.066,subtitleY/h,ctx.measureText('ALL HALLOWS’ EVE.').width/w,w*.013/h);
@@ -77,7 +77,7 @@ function unlockMusic(){void audio.unlock().then(()=>{if(state.music&&!state.paus
 document.addEventListener('pointerdown',()=>{if(state.music)unlockMusic()});
 
 function message(value:string){const el=document.querySelector('#status');if(el)el.textContent=value}
-function controlMarkup(){return `<header><p>UPSIDE DOWN</p><button id="close" aria-label="Close controls">×</button></header>
+function controlMarkup(){return `<header><p>LEAP OF FAITH</p><button id="close" aria-label="Close controls">×</button></header>
  <label>Frame<select data-key="aspect"><option>3:4</option><option>9:16</option><option>16:9</option></select></label>
  <label>Palette<select data-key="palette"><option value="violet">Electric violet</option><option value="ultraviolet">Acid ultraviolet</option><option value="nocturne">Deep violet</option></select></label>
  <label>Post-processing<select data-key="postStyle"><option value="original">Original</option><option value="prism">Prism Print</option><option value="film">Velvet Film</option><option value="etching">Violet Etching</option></select></label>
