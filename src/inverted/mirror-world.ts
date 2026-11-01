@@ -60,7 +60,12 @@ export async function createMirrorWorld(source:T.Scene){
   }
  });
  model.updateWorldMatrix(true,true);
- const wings=wingParts.map((parts,i)=>{const sign=i?1:-1,pivot=new T.Group();pivot.name='Swan shoulder hinge';pivot.position.set(sign*.23,.61,.30);model.add(pivot);pivot.updateWorldMatrix(true,false);parts.forEach(p=>pivot.attach(p));return {pivot,sign};});
+ const wings=wingParts.map((parts,i)=>{
+  const sign=i?1:-1,pivot=new T.Group();pivot.name='Swan shoulder hinge';pivot.position.set(sign*.23,.61,.30);model.add(pivot);pivot.updateWorldMatrix(true,false);parts.forEach(p=>pivot.attach(p));
+  const feathers=parts.filter(p=>p.name.includes('_feather_')).map(part=>{const hinge=new T.Group();pivot.add(hinge);hinge.updateWorldMatrix(true,false);hinge.attach(part);return hinge;});
+  return {pivot,sign,feathers};
+ });
+ const liftAxis=new T.Vector3(0,0,1),spreadAxis=new T.Vector3(0,1,0),spreadRotation=new T.Quaternion();
  return {scene,swan,house,ghost,update(time:number,motion:number){
   const phase=wrap(time)/DURATION*TAU,p=swimPosition(time,'swan'),ex=exchangeAt(time);
   house.update(time,motion);
@@ -69,6 +74,16 @@ export async function createMirrorWorld(source:T.Scene){
   ghost.update(time,p.position,motion);
   swan.position.copy(p.position);swan.position.y=.014*Math.sin(phase*8)*motion+ex.swanHeight;
   swan.rotation.set(-ex.pitch+.012*Math.sin(phase*6)*motion,p.yaw,0,'YXZ');swan.rotateZ(Math.PI-ex.actorAngle+.016*Math.sin(phase*8)*motion);
-  wings.forEach(({pivot,sign})=>{const burst=ex.swanFlap*(.12+.63*Math.sin(ex.flapClock*3.2)**2)*Math.min(1.4,motion);pivot.rotation.z=sign*(.018*Math.sin(phase*4)*motion+burst);pivot.rotation.x=burst*.10;});
+  // Folded feathers point aft. Open them sideways at the shoulder before lifting
+  // the whole wing: a large flight silhouette, rather than a stronger swim twitch.
+  const flight=T.MathUtils.smoothstep(Math.max(0,ex.swanHeight),.04,.62)*Math.min(1,motion);
+  wings.forEach(({pivot,sign,feathers})=>{
+   const burst=ex.swanFlap*(.12+.63*Math.sin(ex.flapClock*3.2)**2)*Math.min(1.4,motion);
+   const lift=.018*Math.sin(phase*4)*motion+burst*(1-flight)+flight*(.88+sign*.12+.13*Math.sin(ex.flapClock*1.25));
+   pivot.quaternion.setFromAxisAngle(liftAxis,sign*lift);
+   pivot.quaternion.multiply(spreadRotation.setFromAxisAngle(spreadAxis,-sign*1.18*flight));
+   pivot.rotateX(flight*.10+burst*.10*(1-flight));
+   feathers.forEach((feather,index)=>{feather.rotation.y=-sign*flight*index*.09;});
+  });
  }};
 }
