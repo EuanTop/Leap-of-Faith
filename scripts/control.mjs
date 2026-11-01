@@ -98,7 +98,7 @@ export function controlPlugin(){
   const versionName=`${exportStamp(new Date(j.createdAt))}_${j.jobId.slice(0,8)}`,version=join(exports,versionName);
   await rename(dir,version);j.published=true;j.cleanup=[];
   j.files=[{path:join(version,'share.mp4'),type:'share'}];
-  try{await pointLatest(exports,versionName)}catch(e){j.warning='Versioned output retained; latest shortcut could not be updated: '+e.message}
+  try{const result=await pointLatest(exports,versionName);j.removedExports=result.removed;if(result.warnings.length)j.warning='Some previous exports could not be removed: '+result.warnings.join('; ')}catch(e){j.warning='Verified output retained; latest shortcut could not be updated: '+e.message}
  }
  return {name:'leap-of-faith-control',configureServer(s){
   server=s;root=server.config.root;origin=`http://127.0.0.1:${server.config.server.port}`;renderer=new Renderer(root,origin);

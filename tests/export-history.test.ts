@@ -6,23 +6,40 @@ import {join} from 'node:path';
 // @ts-expect-error Export lifecycle uses a standalone Node module.
 import {pointLatest,exportStamp} from '../scripts/export-history.mjs';
 
-test('new exports preserve legacy files and all prior version directories',async()=>{
- const root=await mkdtemp(join(tmpdir(),'art-export-history-'));
+async function movie(root:string,name:string,verified=true){
+ const dir=join(root,name);await mkdir(dir);
+ await writeFile(join(dir,'share.mp4'),name);
+ await writeFile(join(dir,'manifest.json'),JSON.stringify({project:'Leap of Faith',frames:864,width:2880,height:3840}));
+ if(verified)await writeFile(join(dir,'validation.json'),JSON.stringify({frames:864,size:[2880,3840],channels:2,decoders:{software:'full decode passed'}}));
+ return dir;
+}
+
+test('a verified replacement removes old films and masters while keeping unrelated material',async()=>{
+ const root=await mkdtemp(join(tmpdir(),'art-export-retention-'));
  try{
-  await mkdir(join(root,'latest'));await writeFile(join(root,'latest','share.mp4'),'legacy movie');
-  await writeFile(join(root,'latest','manifest.json'),JSON.stringify({createdAt:'2026-10-30T14:17:24Z'}));
-  await mkdir(join(root,'version-one'));await writeFile(join(root,'version-one','share.mp4'),'first movie');
-  const first=await pointLatest(root,'version-one');
-  assert.equal(await readFile(join(first.preserved,'share.mp4'),'utf8'),'legacy movie');
-  assert.ok((await lstat(join(root,'latest'))).isSymbolicLink());
-  assert.equal(await readlink(join(root,'latest')),'version-one');
-  await mkdir(join(root,'version-two'));await writeFile(join(root,'version-two','share.mp4'),'second movie');
-  const second=await pointLatest(root,'version-two');
-  assert.equal(second.preserved,undefined);
-  assert.equal(await readFile(join(root,'version-one','share.mp4'),'utf8'),'first movie');
-  assert.equal(await readFile(join(first.preserved,'share.mp4'),'utf8'),'legacy movie');
-  assert.equal(await readFile(join(root,'latest','share.mp4'),'utf8'),'second movie');
-  await assert.rejects(pointLatest(root,'../escape'));
+  const old=await movie(root,'20261101_113240_old');await writeFile(join(old,'master.mkv'),'old master');
+  await movie(root,'latest');
+  await mkdir(join(root,'notes'));await writeFile(join(root,'notes','keep.txt'),'keep');
+  await mkdir(join(root,'.job-in-progress'));
+  await movie(root,'20261101_141654_new');
+  const result=await pointLatest(root,'20261101_141654_new');
+  assert.equal(await readlink(join(root,'latest')),'20261101_141654_new');
+  assert.equal(await readFile(join(root,'latest','share.mp4'),'utf8'),'20261101_141654_new');
+  await assert.rejects(lstat(old));assert.equal(result.removed.length,2);assert.deepEqual(result.warnings,[]);
+  assert.equal(await readFile(join(root,'notes','keep.txt'),'utf8'),'keep');
+  assert.ok((await lstat(join(root,'.job-in-progress'))).isDirectory());
   assert.equal(exportStamp(new Date('2026-10-30T14:17:24Z')),'20261030_221724');
+ }finally{await rm(root,{recursive:true,force:true})}
+});
+
+test('an unverified replacement cannot replace or delete the last usable film',async()=>{
+ const root=await mkdtemp(join(tmpdir(),'art-export-retention-'));
+ try{
+  await movie(root,'20261101_113240_old');await pointLatest(root,'20261101_113240_old');
+  await movie(root,'20261101_141654_bad',false);
+  await assert.rejects(pointLatest(root,'20261101_141654_bad'));
+  assert.equal(await readlink(join(root,'latest')),'20261101_113240_old');
+  assert.ok((await lstat(join(root,'20261101_113240_old','share.mp4'))).isFile());
+  await assert.rejects(pointLatest(root,'../escape'));
  }finally{await rm(root,{recursive:true,force:true})}
 });
