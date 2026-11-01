@@ -8,9 +8,15 @@ import {exchangeAt} from './exchange.mjs';
 type ResidentReaction={reach:number;lean:number;stretch:number;squint:number;lag?:T.Vector3;panic?:number};
 
 export function duckPose(time:number){const phase=wrap(time+exchangeAt(time).routeOffset)/DURATION*TAU;return {phase,position:new T.Vector3(6.0+4.0*Math.sin(phase),-.175,28.0+2.6*Math.cos(phase)),yaw:Math.atan2(4.0*Math.cos(phase),-2.6*Math.sin(phase))};}
+function braidedPosition(time:number,kind:'duck'|'swan'){
+ const p=duckPose(time),ex=exchangeAt(time),side=kind==='duck'?1:-1;
+ // Opposing lateral and forward curves braid around the common swimming route.
+ p.position.x+=side*(Math.cos(p.yaw)*ex.separation+Math.sin(p.yaw)*ex.weaveAdvance);
+ p.position.z+=side*(-Math.sin(p.yaw)*ex.separation+Math.cos(p.yaw)*ex.weaveAdvance);return p;
+}
 export function swimPosition(time:number,kind:'duck'|'swan'='duck'){
- const p=duckPose(time),separation=exchangeAt(time).separation*(kind==='duck'?1:-1);
- p.position.x+=Math.cos(p.yaw)*separation;p.position.z-=Math.sin(p.yaw)*separation;return p;
+ const p=braidedPosition(time,kind),before=braidedPosition(time-.005,kind).position,after=braidedPosition(time+.005,kind).position;
+ p.yaw=Math.atan2(after.x-before.x,after.z-before.z);return p;
 }
 export function createSwimmer(scene:T.Scene){
  const c=createDuck();c.root.scale.setScalar(.40);c.feet.forEach(f=>f.visible=false);scene.add(c.root);

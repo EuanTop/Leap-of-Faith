@@ -18,8 +18,8 @@ function forwardAdvance(time){
  const t=wrap(time);
  return EXCHANGE_CENTERS.reduce((total,center)=>{
   const d=((t-center+DURATION*1.5)%DURATION)-DURATION*.5;
-  const launch=2.0*smooth((d+1.95)/.60),hang=.25*smooth((d+1.35)/.50);
-  const dive=1.5*smooth((d+.80)/.80),emerge=.15*smooth((d-.05)/.50);
+  const launch=2.3*smooth((d+1.95)/.60),hang=.25*smooth((d+1.35)/.50);
+  const dive=1.9*smooth((d+.80)/.80),emerge=.15*smooth((d-.05)/.50);
   const recover=1-smooth((d-1.0)/6.0);
   return total+(launch-hang+dive-emerge)*recover;
  },0);
@@ -31,9 +31,11 @@ export function exchangeAt(time){
  const actorAngle=exchangeAngle(t,0,.90),worldAngle=exchangeAngle(t),daylight=(1-Math.cos(actorAngle))*.5;
  const sign=fromDay?-1:1,height=arc(d),duckHeight=height*sign;
  const pitch=(.82*smooth((d+.82)/.32)*(1-smooth((d-.35)/.95))-.18*pulse(d,-1.65,.80))*sign;
+ const weave=(d+1.8)/3.4,envelope=pulse(d,-1.8,3.4);
  return {time:t,activeDay:daylight>.5,daylight,transition,progress,fromDay,toDay,direction:fromDay?-1:1,height,pitch,
   actorAngle,worldAngle,backgroundAngle:exchangeAngle(t,.24,3.2),duckHeight,swanHeight:-duckHeight,
-  routeOffset:forwardAdvance(t),separation:.50*pulse(d,-1.8,3.4),
+  routeOffset:forwardAdvance(t),separation:1.05*envelope*Math.cos(TAU*(weave-.40)),
+  weaveAdvance:.12*envelope*Math.sin(TAU*weave),
   heroFocus:Math.max(pulse(d,-1.5,.80),pulse(d,-.05,.75)),
   duckFlap:Math.max(pulse(d,.10,.9),pulse(d,-2.10,1.0),pulse(t,3.0,.85),pulse(t,17.4,.85)),
   swanFlap:Math.max(pulse(d,.12,1.0),pulse(d,-1.96,1.08),pulse(t,4.0,1.05),pulse(t,18.4,1.05)),
