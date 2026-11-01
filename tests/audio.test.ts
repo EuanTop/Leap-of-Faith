@@ -53,6 +53,14 @@ test('event IDs and wrapped tails describe the actual complete audio',()=>{
  assert.ok(score.events.some((e:any)=>e.continuationOf));
 });
 
+test('the selected late low notes have varied shorter breaths and retain their exact onsets',()=>{
+ const a=score.events.find((e:any)=>e.id==='gravity-b02-t6900000-p33');
+ const c=score.events.find((e:any)=>e.id==='gravity-b03-t6900000-p36');
+ assert.deepEqual([a.start,a.end],[14.1,18.0]);assert.deepEqual([c.start,c.end],[21.3,26.4]);
+ const fullDuration=(event:any)=>event.end-event.start+score.events.filter((e:any)=>e.continuationOf===event.id).reduce((sum:number,e:any)=>sum+e.end-e.start,0);
+ for(const event of original('gravity').filter((e:any)=>e.pitch===38||e.pitch===34))assert.ok(Math.abs(fullDuration(event)-7.8)<1e-8);
+});
+
 test('WAV encodes exact 48 kHz stereo PCM16 and accepts a lower synthesis rate',()=>{
  const wav=encodeWav(score);assert.equal(wav.toString('ascii',0,4),'RIFF');assert.equal(wav.readUInt16LE(20),1);
  assert.equal(wav.readUInt16LE(22),2);assert.equal(wav.readUInt32LE(24),48000);assert.equal(wav.readUInt16LE(34),16);

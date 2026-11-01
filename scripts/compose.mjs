@@ -5,7 +5,7 @@ import { diffuseSpace } from './cosmic.mjs';
 import { exchangeAt } from '../src/inverted/exchange.mjs';
 
 export const DURATION = 28.8;
-export const VERSION = 'upside-down-spatial-duet-3.0';
+export const VERSION = 'leap-of-faith-spatial-duet-3.1';
 export const EVENT_ID_SCHEMA = 'track-bar-onset-us-pitch-v2';
 export const BEAT = 1.2, BAR = 7.2;
 const TAU = Math.PI * 2;
@@ -42,8 +42,9 @@ export function createScore({sampleRate=48000}={}) {
  for(let b=0;b<4;b++) {
   const start=b*BAR,h=harmony[b],f=frequency(h.root);
   // A slowly opening fundamental, centred and unpulsed; no bass riff or percussion.
-  add({track:'gravity',start:start-.3,duration:7.8,pitch:h.root,send:.08,voice:t=>{
-   const env=breath(t,7.8,1.8,2.0),a=TAU*f*t;
+  const rootDuration=b===2?3.9:b===3?5.1:7.8;
+  add({track:'gravity',start:start-.3,duration:rootDuration,pitch:h.root,send:.08,voice:t=>{
+   const env=breath(t,rootDuration,Math.min(1.8,rootDuration*.24),Math.min(2.0,rootDuration*.30)),a=TAU*f*t;
    return .105*env*(Math.sin(a)+.20*Math.sin(a*2)+.035*Math.sin(a*3));
   }});
   h.notes.forEach((pitch,i)=>{
