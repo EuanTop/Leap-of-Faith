@@ -7,36 +7,29 @@ export function exchangeAngle(time,delay=0,width=3.0){
  const t=wrap(time);return Math.PI*EXCHANGE_CENTERS.reduce((n,c)=>n+smooth((t-c-delay+width/2)/width),0);
 }
 function arc(d){
- const keys=[[-1.65,0,0],[-1.30,.98,.15],[-.95,1.04,0],[-.73,.94,-.9],[-.45,0,-3.8],[.18,-1.85,0],[.48,-1.76,.65],[1.35,0,0]];
+ // One rounded apex per leap, with a continuous downward velocity through
+ // the water. There are no hold keys or changes to the playback clock.
+ const keys=[[-1.65,0,0],[-1.08,.92,0],[-.45,0,-3.0],[.18,-1.60,0],[1.35,0,0]];
  for(let i=0;i<keys.length-1;i++){
   const [a,p,m]=keys[i],[b,q,n]=keys[i+1];if(d<a||d>b)continue;
   const u=(d-a)/(b-a),u2=u*u,u3=u2*u;
-  return (2*u3-3*u2+1)*p+(u3-2*u2+u)*m*(b-a)+(-2*u3+3*u2)*q+(u3-u2)*n*(b-a);
- }return 0;
-}
-function forwardAdvance(time){
- const t=wrap(time),depth=.75,holds=[[-1.65,1.10],[-.45,1.26]];
- // Integrate smooth slow-motion windows. Outside the air, the route has one
- // constant cruising speed: no launch impulse or catch-up burst before a jump.
- const lost=EXCHANGE_CENTERS.length*depth*holds.reduce((sum,[,width])=>sum+width/2,0);
- let offset=t*lost/DURATION;
- for(const center of EXCHANGE_CENTERS)for(const [start,width] of holds){
-  const u=Math.max(0,Math.min(1,(t-center-start)/width));
-  offset-=depth*width*(u/2-Math.sin(TAU*u)/(2*TAU));
- }
- return offset;
+  return {height:(2*u3-3*u2+1)*p+(u3-2*u2+u)*m*(b-a)+(-2*u3+3*u2)*q+(u3-u2)*n*(b-a),
+   velocity:(6*u2-6*u)*(p-q)/(b-a)+(3*u2-4*u+1)*m+(3*u2-2*u)*n};
+ }return {height:0,velocity:0};
 }
 const gentle=x=>{const u=Math.max(0,Math.min(1,x));return u*u*u*(10+u*(-15+6*u));};
+function glideProgress(value){
+ const u=Math.max(0,Math.min(1,value)),r=.08;
+ const enter=x=>(x/2-r*Math.sin(Math.PI*x/r)/(2*Math.PI))/(1-r);
+ return u<r?enter(u):u>1-r?1-enter(1-u):(u-r/2)/(1-r);
+}
 function flightTravel(time){
- const t=wrap(time),clock=t+forwardAdvance(t);
+ const t=wrap(time);
  return EXCHANGE_CENTERS.reduce((distance,center)=>{
   const d=((t-center+DURATION*1.5)%DURATION)-DURATION*.5;
-  const start=center-1.65,end=center+1.35;
-  const startClock=start+forwardAdvance(start),endClock=end+forwardAdvance(end);
-  // Extend the same forward arc in space. Its progress uses the existing
-  // slow-motion clock, so the apex remains slow and takeoff has no impulse.
-  const localClock=clock+(center+d-t);
-  const progress=gentle((localClock-startClock)/(endClock-startClock));
+  // A nearly uniform forward glide, with brief soft joins at takeoff and
+  // landing. Extra distance eases back during swimming, never in mid-air.
+  const progress=glideProgress((d+1.65)/3);
   return distance+2.5*progress*(1-gentle((d-1.35)/8));
  },0);
 }
@@ -45,14 +38,12 @@ export function exchangeAt(time){
  const t=wrap(time),index=Math.abs(t-12)<Math.abs(t-26.4)?0:1,d=t-EXCHANGE_CENTERS[index];
  const fromDay=index===1,toDay=!fromDay,progress=smooth((d+1.5)/3),transition=Math.abs(d)<1.7;
  const actorAngle=exchangeAngle(t,0,.90),worldAngle=exchangeAngle(t),daylight=(1-Math.cos(actorAngle))*.5;
- const sign=fromDay?-1:1,height=arc(d)*.88,duckHeight=height*sign;
- const pitch=(.74*smooth((d+.82)/.32)*(1-smooth((d-.35)/.95))-.18*pulse(d,-1.65,.80))*sign;
- const routeOffset=forwardAdvance(t);
+ const sign=fromDay?-1:1,{height,velocity}=arc(d),duckHeight=height*sign;
+ const pitch=.58*Math.tanh(-velocity*sign/2.4);
  return {time:t,activeDay:daylight>.5,daylight,transition,progress,fromDay,toDay,direction:fromDay?-1:1,height,pitch,
   actorAngle,worldAngle,backgroundAngle:exchangeAngle(t,.24,3.2),duckHeight,swanHeight:-duckHeight,
-  routeOffset,flightTravel:flightTravel(t),separation:.50*pulse(d,-1.8,3.4),
-  heroFocus:Math.max(pulse(d,-1.5,.80),pulse(d,-.05,.75)),
+  routeOffset:0,flightTravel:flightTravel(t),separation:.50*pulse(d,-1.8,3.4),
   duckFlap:Math.max(pulse(d,.10,.9),pulse(d,-2.10,1.0),pulse(t,3.0,.85),pulse(t,17.4,.85)),
   swanFlap:Math.max(pulse(d,.12,1.0),pulse(d,-1.96,1.08),pulse(t,4.0,1.05),pulse(t,18.4,1.05)),
-  flapClock:(t+routeOffset)*TAU,submerged:Math.abs(d)<.35};
+  flapClock:t*TAU,submerged:Math.abs(d)<.35};
 }

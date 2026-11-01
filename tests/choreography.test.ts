@@ -18,16 +18,19 @@ test('each hero apex precedes the architectural reaction, and both exchanges set
  for(let t=0;t<28.8;t+=.03){assert.ok(Math.abs(castleCue(t).q-castleCue(t+28.8).q)<1e-8);assert.ok(Math.abs(pigmentCue(t)-pigmentCue(t+28.8))<1e-8);}
 });
 
-test('cruising stays uniform before takeoff, with slow motion confined to the air',()=>{
+test('leaps retain a regular clock, rounded apices and forward motion throughout the air',()=>{
  const speed=(t:number)=>1+(exchangeAt(t+.0005).routeOffset-exchangeAt(t-.0005).routeOffset)/.001;
  for(const center of EXCHANGE_CENTERS){
-  assert.ok(speed(center-1.10)<.40);assert.ok(speed(center-1.10)>.15);
-  const cruise=speed(center-2.0);
-  for(let d=-2.5;d<=-1.66;d+=.02)assert.ok(Math.abs(speed(center+d)-cruise)<1e-6,'pre-jump acceleration');
-  assert.ok(cruise>1&&cruise<1.07);
-  assert.ok(speed(center+.18)<.40);
-  for(let d=-2.5;d<1.6;d+=.01)assert.ok(speed(center+d)<=cruise+1e-6,'an acceleration burst exceeds cruising speed');
-  assert.ok(exchangeAt(center-1.30).height>.84&&exchangeAt(center-.95).height>.90);
+  for(let d=-2.5;d<1.6;d+=.02)assert.ok(Math.abs(speed(center+d)-1)<1e-8,'the scene clock slows or accelerates');
+  const slope=(d:number)=>(exchangeAt(center+d+.0001).height-exchangeAt(center+d-.0001).height)/.0002;
+  assert.ok(slope(-1.20)>.2&&slope(-.96)<-.2,'the outgoing apex contains a hold');
+  assert.ok(slope(.06)<-.2&&slope(.30)>.2,'the emerging apex contains a hold');
+  const before=exchangeAt(center-1.20),after=exchangeAt(center-.96);
+  assert.ok(before.pitch*before.direction<0&&after.pitch*after.direction>0,'body pitch must follow the arc in either world');
+  assert.ok(Math.abs(slope(-.45)+3)<.01,'diving velocity must continue through the surface');
+  const travelSpeed=(d:number)=>(exchangeAt(center+d+.0001).flightTravel-exchangeAt(center+d-.0001).flightTravel)/.0002;
+  assert.ok(travelSpeed(-1.1)>.8);
+  assert.ok(Math.abs(travelSpeed(-1.1)-travelSpeed(.18))<1e-7,'horizontal glide pauses at the apex');
  }
 });
 

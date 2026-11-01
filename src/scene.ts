@@ -36,8 +36,8 @@ export async function createArtwork(){
  let width=0,height=0,frameCount=0,frameMs=0;
  function render(time:number,w:number,h:number,state:ArtState){const begin=performance.now(),t=wrap(time);renderer.info.reset();
   if(w!==width||h!==height){renderer.setSize(w,h,false);composer.setSize(w,h);aboveWorld.setSize(w,h);belowWorld.setSize(w,h);width=w;height=h;}
-  const ex=exchangeAt(t),castle=castleCue(t,.10),wide=castle.active?Math.sin(Math.PI*castle.u):0;camera.aspect=w/h;camera.fov=state.cameraFov+8+5*wide-2.4*ex.heroFocus;const angle=(12+(state.cameraTilt-40)*.35)*Math.PI/180;
-  const focus=new T.Vector3(0,2.8,0),distance=48*Math.max(1,.75/(w/h))*(1+.18*wide-.035*ex.heroFocus);camera.position.set(Math.sin(angle)*distance,2.8,Math.cos(angle)*distance);camera.lookAt(focus);camera.updateProjectionMatrix();camera.updateMatrixWorld();
+  const ex=exchangeAt(t),castle=castleCue(t,.10),wide=castle.active?Math.sin(Math.PI*castle.u):0;camera.aspect=w/h;camera.fov=state.cameraFov+8+5*wide;const angle=(12+(state.cameraTilt-40)*.35)*Math.PI/180;
+  const focus=new T.Vector3(0,2.8,0),distance=48*Math.max(1,.75/(w/h))*(1+.18*wide);camera.position.set(Math.sin(angle)*distance,2.8,Math.cos(angle)*distance);camera.lookAt(focus);camera.updateProjectionMatrix();camera.updateMatrixWorld();
   lighting.update(t);house.update(t,state.motion);duck.update(t,state.motion);ghost.update(t,duck.root.position,state.motion);lake.update(t,state.river,state.trail);mirror.update(t,state.motion);mirror.scene.updateMatrixWorld(true);
   nightRig.update(t,duck.root.position,state.motion);dayRig.update(t,mirror.swan.position,state.motion);
   scene.updateMatrixWorld(true);mirror.scene.updateMatrixWorld(true);

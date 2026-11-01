@@ -26,7 +26,7 @@ Open `http://127.0.0.1:5175/`. The collapsible panel shares its parameters with 
 - Black–violet–gold fields travel through curved material paths. Lettering and its contrast halo continuously change between pale yellow and deep violet with the local background.
 - Corresponding tower rooms and galleries exchange their positions above and below the water along separate spatial paths. Each module reorients locally, carrying its resident and lantern, without rolling the whole scene.
 - Both worlds use permanent 3D geometry. Water-plane clipping separates the upper and lower views; only submerged geometry receives wave distortion. The gallery and three spires have their own motion.
-- The swimmers leap first, briefly lingering at the apex; the rooms follow on staggered, eased paths. Residents react after their room starts and catch up with a short delay, retaining their simple cloth form.
+- The swimmers follow uninterrupted forward arcs, with body pitch following ascent and descent; the rooms then follow on staggered, eased paths. Residents react after their room starts and catch up with a short delay, retaining their simple cloth form.
 - The duck, cloth construction and lighting methods are adapted from the preceding series artwork. The space and score are rebuilt here.
 - A new 50 BPM, unpulsed ambient score: long harmony, centred low roots, orbiting common tones and pitched duck/swan duets that exchange melody and harmony roles without changing tempo. Circular stereo reverberation preserves the loop.
 - Surface trails retain fixed world coordinates through the exchange; short entry and emergence rings stay at their original contact points.

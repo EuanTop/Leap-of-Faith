@@ -24,7 +24,7 @@ test('the two characters have separate wing gestures and a common exchange envel
 });
 
 
-test('the slow-motion route advances without reversing or jumping at the loop',()=>{
+test('the regular route advances without reversing or jumping at the loop',()=>{
  let previous=exchangeAt(0).routeOffset;
  for(let time=.005;time<=28.8;time+=.005){const current=time+exchangeAt(time).routeOffset;assert.ok(current>previous,'forward momentum reverses');previous=current;}
  assert.ok(Math.abs(exchangeAt(0).routeOffset-exchangeAt(28.8).routeOffset)<1e-9);
