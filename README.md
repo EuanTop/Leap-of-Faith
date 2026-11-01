@@ -7,7 +7,7 @@ Two suspended worlds meet at the water. A duck and a swan cross between night an
 
 Released **1 November 2026**.
 
-This branch explores independently moving castle modules and flowing colour exchanges. The full world-turn version is preserved at Git tag `world-flip-v1`.
+Castle modules move independently as the worlds exchange light and colour. The earlier full world-turn study is available at Git tag `world-flip-v1`.
 
 Video export produces a high-quality 4K HEVC/AAC MP4 directly, without generating a lossless master.
 
